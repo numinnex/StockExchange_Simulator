@@ -1,8 +1,10 @@
 using Infrastructure;
+using Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.ConfigureOptions<TwelveDataApiOptionSetup>();
+
 var presentationAssembly = typeof(Presentation.AssemblyReference).Assembly;
 builder.Services.AddControllers()
     .AddApplicationPart(presentationAssembly);

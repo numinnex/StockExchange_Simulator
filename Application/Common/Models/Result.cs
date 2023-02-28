@@ -1,6 +1,8 @@
+using Application.Common.Interfaces;
+
 namespace Application.Common.Models;
 
-public sealed class Result<TValue>
+public sealed class Result<TValue> : IResult
 {
     public required bool IsSuccess { get; init; }
     public required TValue Value { get; init; }
