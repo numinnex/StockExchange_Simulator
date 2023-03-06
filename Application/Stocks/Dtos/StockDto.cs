@@ -1,7 +1,7 @@
 using Domain.Entities;
 using Domain.ValueObjects;
 
-namespace Application.Stocks.Queries;
+namespace Application.Stocks.Dtos;
 
 public sealed class StockDto
 {

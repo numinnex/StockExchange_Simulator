@@ -12,6 +12,6 @@ public sealed class Stock : Entity
     public required string Country { get; set; }
     public required Change Change { get; set; } 
     public double? TrendingScore { get; set; }
-    public IList<Trade>? Trades { get; set; }
-    public IList<TimeSeries>? TimeSeries { get; set; }
+    public IEnumerable<Trade>? Trades { get; set; }
+    public IEnumerable<TimeSeries>? TimeSeries { get; set; }
 }

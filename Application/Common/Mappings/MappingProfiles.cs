@@ -1,4 +1,4 @@
-using Application.Stocks.Queries;
+using Application.Stocks.Dtos;
 using AutoMapper;
 using Domain.Entities;
 

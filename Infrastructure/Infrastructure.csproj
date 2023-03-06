@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Application\Application.csproj" />
       <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
 
@@ -24,12 +25,13 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+      <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Portfolio" />
-      <Folder Include="Stock" />
-      <Folder Include="Trade" />
+      <Folder Include="PortfolioServices" />
+      <Folder Include="StockServices" />
+      <Folder Include="TradeServices" />
     </ItemGroup>
 
 </Project>
