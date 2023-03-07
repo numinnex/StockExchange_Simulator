@@ -6,5 +6,5 @@ namespace Application.Common.Intefaces;
 
 public interface IStockClient
 {
-    Task<List<Stock>> GetStocksByNameAsync(string name);
+    Task<List<Stock>> GetStocksBySymbolAsync(string name);
 }

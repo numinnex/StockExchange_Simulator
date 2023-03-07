@@ -7,7 +7,7 @@ using BenchmarkDotNet.Running;
 using Benchmarks;
 
 
-BenchmarkRunner.Run<BenchmarkUrlCreater>();
+BenchmarkRunner.Run<ListEnumerableBenchmark>();
 return;
 
 

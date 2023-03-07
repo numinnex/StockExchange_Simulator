@@ -2,7 +2,7 @@ namespace Domain.Common;
 
 public class Entity
 {
-    public required Guid Id { get; init; }
+    public Guid Id { get; init; }
 
     public static bool operator ==(Entity? first, Entity? second)
     {

@@ -29,12 +29,10 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
     public async Task<Result<List<StockDto>>> Handle(GetStockbyNameQuery request, CancellationToken cancellationToken)
     {
         var stocks = (await _stockRepository.
-            GetAllAsync(x => x.Name == request.Name)).ToList();
+            GetAllAsync(cancellationToken,x => x.Name == request.Name));
 
         if (!stocks.Any())
-        {
-            stocks = await _stockClient.GetStocksByNameAsync(request.Name);
-        }
+            stocks = await _stockClient.GetStocksBySymbolAsync(request.Name);
 
         if (!stocks.Any())
         {
@@ -44,7 +42,7 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
             });
         }
         
-        await _stockRepository.AddRangeAsync(stocks);
+        await _stockRepository.AddRangeAsync(stocks, cancellationToken);
         
         var stocksMapped = _mapper.Map<List<StockDto>>(stocks);
         return Result<List<StockDto>>.Success(stocksMapped);

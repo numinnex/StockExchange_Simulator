@@ -16,7 +16,7 @@ public class Repository<T> : IRepository<T> where T : class
         _dbSet = _ctx.Set<T>();
     }
     
-    public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
+    public async Task<List<T>> GetAllAsync(CancellationToken token,Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
     {
         IQueryable<T> query = _dbSet;
 
@@ -31,26 +31,37 @@ public class Repository<T> : IRepository<T> where T : class
         if (filter is not null)
             query = query.Where(filter);
 
-        return await query.ToListAsync();
+        return await query.ToListAsync(token);
     }
 
-    public async Task AddAsync(T entity)
+
+    public async Task AddAsync(T entity, CancellationToken token)
     {
-        await _dbSet.AddAsync(entity);
+        await _dbSet.AddAsync(entity, token);
     }
 
-    public Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>> filter, string? includeProperties = null)
+    public async Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>> filter, CancellationToken token,string? includeProperties = null)
     {
-        throw new NotImplementedException();
+        IQueryable<T> query = _dbSet;
+
+        if (includeProperties is not null)
+        {
+            foreach (var prop in includeProperties.Split(new char[]{','}, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query.Include(prop);
+            }
+        }
+        
+        return await query.FirstOrDefaultAsync(filter, token);
     }
 
-    public void Remove(T entity)
+    public void Remove(T entity )
     {
-        throw new NotImplementedException();
+        _dbSet.Remove(entity);
     }
 
-    public void RemoveRange(IEnumerable<T> entities)
+    public void RemoveRange(IEnumerable<T> entities )
     {
-        throw new NotImplementedException();
+        _dbSet.RemoveRange(entities);
     }
 }

@@ -1,8 +1,10 @@
 using Application.Common.Intefaces;
+using Application.Common.Interfaces.Repository;
 using Domain.Identity;
 using Infrastructure.Database;
 using Infrastructure.Database.Interceptors;
 using Infrastructure.Options;
+using Infrastructure.Repository;
 using Infrastructure.TwelveDataApi;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +22,8 @@ public static class ConfigureServices
         services.AddScoped<AuditableEntitySaveChanges>();
         services.AddSingleton<IStockClient, StockClient>();
 
+        services.AddScoped<IStockRepository, StockRepository>();
+        
         services.AddTransient<TwelveDataHeaderMiddleware>();
         
         

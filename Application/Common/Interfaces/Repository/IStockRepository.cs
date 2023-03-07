@@ -6,5 +6,5 @@ public interface IStockRepository : IRepository<Stock>
 {
     void Update(Stock stock);
     Task SaveChangesAsync(CancellationToken token);
-    Task AddRangeAsync(IEnumerable<Stock> entities);
+    Task AddRangeAsync(IEnumerable<Stock> entities, CancellationToken token);
 }
