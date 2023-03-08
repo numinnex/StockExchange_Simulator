@@ -59,6 +59,9 @@ file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>{
             a => a.Property(x => x.Value).HasColumnType("money"));
         builder.OwnsOne(x => x.Price ,
             a => a.Property(x => x.Value).HasColumnType("money"));
+        builder.HasOne(x => x.TimeSeries)
+            .WithOne(x => x.Stock)
+            .HasForeignKey<Stock>(x => x.TimeSeriesId);
     }
 }
 
@@ -70,7 +73,10 @@ file sealed class StockSnapshotTableConfiguration : IEntityTypeConfiguration<Sto
         builder.Property(x => x.Open).HasColumnType("money");
         builder.Property(x => x.High).HasColumnType("money");
         builder.Property(x => x.Low).HasColumnType("money");
-        
+
+        builder.HasOne(x => x.TimeSeries)
+            .WithMany(x => x.StockValues);
+
     }
 }
 
@@ -78,8 +84,10 @@ file class TimeSeriesTableConfiguration : IEntityTypeConfiguration<TimeSeries>
 {
     public void Configure(EntityTypeBuilder<TimeSeries> builder)
     {
-        builder.Property(x => x.Inteval)
+        builder.Property(x => x.Interval)
             .HasMaxLength(100);
+        builder.HasOne(x => x.Stock)
+            .WithOne(x => x.TimeSeries);
     }
 }
 

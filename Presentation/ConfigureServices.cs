@@ -1,6 +1,6 @@
 namespace Presentation;
 
-public sealed class ConfigureServices
+public static class ConfigureServices
 {
     
 }

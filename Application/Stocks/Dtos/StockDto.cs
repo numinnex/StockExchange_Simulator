@@ -13,5 +13,5 @@ public sealed class StockDto
     public required Change Change { get; init; } 
     public double? TrendingScore { get; init; }
     public IList<Trade>? Trades { get; init; }
-    public IList<TimeSeries>? TimeSeries { get; init; }
+    public TimeSeriesDto? TimeSeries { get; init; }
 }

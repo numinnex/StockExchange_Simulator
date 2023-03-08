@@ -6,7 +6,6 @@ using Domain.ValueObjects;
 
 namespace Infrastructure.TwelveDataApi;
 
-public sealed record PriceRead(double price);
 
 public sealed class StockClient : IStockClient
 {
@@ -18,27 +17,52 @@ public sealed class StockClient : IStockClient
     }
     public async Task<List<Stock>> GetStocksBySymbolAsync(string name)
     {
-        //TODO - Refactor => move stock price retrieval to a StockPriceService
+        //TODO - Refactor => Move stock price and stock timeseries to seperate services 
         
         var stocksResponse = await _client.GetFromJsonAsync<StockResponse>($"stocks?symbol={name}&format=json");
         var stockPriceResponse = await _client.GetAsync($"price?symbol={name}&format=json");
-        
+        var stocksTimeSeries =
+            await _client.GetFromJsonAsync<TimeSeriesResponse>(
+                $"time_series?interval=1day&symbol={name}&format=json&outputsize=30");
+        double price = 0.00;
+
+        if (stockPriceResponse.IsSuccessStatusCode)
+        {
+            price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
+        }
+
         if (stocksResponse!.Status == "ok")
         {
             var stocksResult = new List<Stock>();
+            
             foreach (var stockReadModel in stocksResponse.Data)
             {
-                stocksResult.Add(new Stock
+                var newStock = new Stock
                 {
                     Name = stockReadModel.Name,
                     Country = stockReadModel.Country,
                     Currency = stockReadModel.Currency,
                     Symbol = stockReadModel.Symbol,
-                    Price = stockPriceResponse.IsSuccessStatusCode ? 
-                        new Price { Value = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceRead>())!.price }
-                        : new Price() { Value = 0.00}
-                }); 
+                    Price = new Price(){ Value = price},
+                };
+                var timeSeriesSnapShot = new TimeSeries()
+                {
+                    Interval = stocksTimeSeries!.Meta.Interval,
+                    TimeZone = stocksTimeSeries.Meta.exchange_timezone,
+                    StockValues = stocksTimeSeries.Values.Select(x => new StockSnapshot()
+                    {
+                        Close = x.Close,
+                        Datetime = x.DateTime,
+                        High = x.High,
+                        Low = x.Low,
+                        Open = x.Open,
+                    }).ToArray(),
+                    Stock = newStock
+                };
+                newStock.TimeSeries = timeSeriesSnapShot;
+                stocksResult.Add(newStock);
             }
+           
             return stocksResult;
         }
 

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Application.Common.Interfaces.Repository;
 using Domain.Entities;
 using Infrastructure.Database;
@@ -12,6 +13,31 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
     public StockRepository(ApplicationDbContext ctx) : base(ctx)
     {
         _ctx = ctx;
+    }
+
+    public override async Task<List<Stock>> GetAllAsync(CancellationToken token, Expression<Func<Stock, bool>>? filter = null, string? includeProperties = null)
+    {
+        IQueryable<Stock> query = _ctx.Stocks;
+
+        if (includeProperties is not null)
+        {
+            foreach (var prop in includeProperties.Split(new char[]{','}, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (prop == "TimeSeries")
+                {
+                    query.Include(x => x.TimeSeries).ThenInclude(x => x.StockValues);
+                }
+                else
+                {
+                    query.Include(prop);
+                }
+            }
+        }
+        
+        if (filter is not null)
+            query = query.Where(filter);
+
+        return await query.ToListAsync(token);
     }
 
     public void Update(Stock stock )

@@ -1,3 +1,4 @@
+using Application;
 using Infrastructure;
 using Infrastructure.Options;
 
@@ -8,6 +9,7 @@ var presentationAssembly = typeof(Presentation.AssemblyReference).Assembly;
 builder.Services.AddControllers()
     .AddApplicationPart(presentationAssembly);
 
+builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

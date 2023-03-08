@@ -1,13 +1,10 @@
-using Domain.Common;
+namespace Application.Stocks.Dtos;
 
-namespace Domain.Entities;
-
-public sealed class StockSnapshot : SubEntity
+public sealed class StockSnapShotDto
 {
     public required double  Close { get; init; }
     public required double  Low { get; init; }
     public required double  High { get; init; }
     public required double  Open { get; init; }
     public required DateTime Datetime { get; init; }
-    public TimeSeries? TimeSeries { get; set; }
 }

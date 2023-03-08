@@ -10,7 +10,7 @@ namespace Application.Stocks.Queries;
 
 public sealed record GetStockbyNameQuery : IRequest<Result<List<StockDto>>>
 {
-    public required string Name { get; init; } 
+    public required string Symbol { get; init; } 
 }
 
 public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQuery, Result<List<StockDto>>>
@@ -29,11 +29,15 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
     public async Task<Result<List<StockDto>>> Handle(GetStockbyNameQuery request, CancellationToken cancellationToken)
     {
         var stocks = (await _stockRepository.
-            GetAllAsync(cancellationToken,x => x.Name == request.Name));
+            GetAllAsync(cancellationToken,x => x.Symbol == request.Symbol , "TimeSeries,Trades"));
 
-        if (!stocks.Any())
-            stocks = await _stockClient.GetStocksBySymbolAsync(request.Name);
+        if (stocks.Any())
+        {
+            var stocksMapped = _mapper.Map<List<StockDto>>(stocks);
+            return Result<List<StockDto>>.Success(stocksMapped);
+        }
 
+        stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol);
         if (!stocks.Any())
         {
             return Result<List<StockDto>>.Failure(new List<StockDto>(), new Error[]
@@ -43,8 +47,9 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
         }
         
         await _stockRepository.AddRangeAsync(stocks, cancellationToken);
+        await _stockRepository.SaveChangesAsync(cancellationToken);
         
-        var stocksMapped = _mapper.Map<List<StockDto>>(stocks);
-        return Result<List<StockDto>>.Success(stocksMapped);
+        var stocksFromApiMapped = _mapper.Map<List<StockDto>>(stocks);
+        return Result<List<StockDto>>.Success(stocksFromApiMapped);
     }
 }

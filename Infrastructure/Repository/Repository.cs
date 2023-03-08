@@ -16,7 +16,7 @@ public class Repository<T> : IRepository<T> where T : class
         _dbSet = _ctx.Set<T>();
     }
     
-    public async Task<List<T>> GetAllAsync(CancellationToken token,Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
+    public virtual async Task<List<T>> GetAllAsync(CancellationToken token,Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
     {
         IQueryable<T> query = _dbSet;
 
