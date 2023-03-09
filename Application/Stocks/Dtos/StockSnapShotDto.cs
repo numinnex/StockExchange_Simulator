@@ -1,6 +1,8 @@
+using Application.Common.Intefaces;
+
 namespace Application.Stocks.Dtos;
 
-public sealed class StockSnapShotDto
+public sealed class StockSnapShotDto  
 {
     public required double  Close { get; init; }
     public required double  Low { get; init; }

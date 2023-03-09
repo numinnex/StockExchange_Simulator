@@ -1,9 +1,10 @@
+using Application.Common.Intefaces;
 using Domain.Entities;
 using Domain.ValueObjects;
 
 namespace Application.Stocks.Dtos;
 
-public sealed class StockDto
+public sealed class StockDto  
 {
     public required string Symbol { get; init; }
     public required string Name { get; init; }

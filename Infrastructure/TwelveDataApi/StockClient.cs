@@ -3,6 +3,9 @@ using Application.Common.Intefaces;
 using Application.Common.Models.ReadModels;
 using Domain.Entities;
 using Domain.ValueObjects;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Infrastructure.TwelveDataApi;
 
@@ -10,62 +13,95 @@ namespace Infrastructure.TwelveDataApi;
 public sealed class StockClient : IStockClient
 {
     private readonly HttpClient _client;
+    private readonly IMemoryCache _cache;
 
-    public StockClient(HttpClient client)
+    public StockClient(HttpClient client, IMemoryCache cache )
     {
         _client = client;
+        _cache = cache;
     }
     public async Task<List<Stock>> GetStocksBySymbolAsync(string name)
     {
-        //TODO - Refactor => Move stock price and stock timeseries to seperate services 
-        
+        //TODO - Refactor => Move stock price and stock timeseries to seperate services && move mapping response to domain
         var stocksResponse = await _client.GetFromJsonAsync<StockResponse>($"stocks?symbol={name}&format=json");
-        var stockPriceResponse = await _client.GetAsync($"price?symbol={name}&format=json");
-        var stocksTimeSeries =
-            await _client.GetFromJsonAsync<TimeSeriesResponse>(
-                $"time_series?interval=1day&symbol={name}&format=json&outputsize=30");
-        double price = 0.00;
 
-        if (stockPriceResponse.IsSuccessStatusCode)
+        if (stocksResponse!.Data.Any())
         {
+            var stockPriceResponse = await _client.GetAsync($"price?symbol={name}&format=json");
+            var stocksTimeSeriesResponse =
+                await _client.GetFromJsonAsync<TimeSeriesResponse>(
+                    $"time_series?interval=1day&symbol={name}&format=json&outputsize=30");
+            double price = 0.00;
+
+            if (!stockPriceResponse.IsSuccessStatusCode)
+            {
+                price = 0.00;
+            }
+
             price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
-        }
-
-        if (stocksResponse!.Status == "ok")
-        {
+            
             var stocksResult = new List<Stock>();
             
-            foreach (var stockReadModel in stocksResponse.Data)
+            foreach (var stockReadModel in stocksResponse.Data.ToArray())
             {
-                var newStock = new Stock
-                {
-                    Name = stockReadModel.Name,
-                    Country = stockReadModel.Country,
-                    Currency = stockReadModel.Currency,
-                    Symbol = stockReadModel.Symbol,
-                    Price = new Price(){ Value = price},
-                };
-                var timeSeriesSnapShot = new TimeSeries()
-                {
-                    Interval = stocksTimeSeries!.Meta.Interval,
-                    TimeZone = stocksTimeSeries.Meta.exchange_timezone,
-                    StockValues = stocksTimeSeries.Values.Select(x => new StockSnapshot()
-                    {
-                        Close = x.Close,
-                        Datetime = x.DateTime,
-                        High = x.High,
-                        Low = x.Low,
-                        Open = x.Open,
-                    }).ToArray(),
-                    Stock = newStock
-                };
-                newStock.TimeSeries = timeSeriesSnapShot;
+                var newStock = MapStockResponse(stockReadModel, price);
+                var timeSeries = MapTimeSeriesResponse(stocksTimeSeriesResponse, newStock);
+                newStock.TimeSeries = timeSeries;
                 stocksResult.Add(newStock);
             }
            
             return stocksResult;
         }
-
         return Enumerable.Empty<Stock>().ToList();
+    }
+
+    public async Task<double> GetRealtimePrice(string symbol) 
+    {
+        if (_cache.TryGetValue(symbol, out double stockPrice))
+        {
+            return stockPrice;
+        }
+        var stockPriceResponse = await _client.GetAsync($"price?symbol={symbol}&format=json");
+        if (stockPriceResponse.IsSuccessStatusCode)
+        {
+            var price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
+            _cache.Set(symbol, price, new MemoryCacheEntryOptions()
+            {
+               AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
+            } );
+            return price;
+        }
+        return _cache.Get<double>(symbol);
+    }
+
+    private static Stock MapStockResponse(StockReadModel stockReadModel, double price)
+    {
+        var newStock = new Stock
+        {
+            Name = stockReadModel.Name,
+            Country = stockReadModel.Country,
+            Currency = stockReadModel.Currency,
+            Symbol = stockReadModel.Symbol,
+            Price = new Price() { Value = price },
+        };
+        return newStock;
+    }
+    private static TimeSeries MapTimeSeriesResponse(TimeSeriesResponse? stocksTimeSeries, Stock newStock)
+    {
+        var timeSeriesSnapShot = new TimeSeries()
+        {
+            Interval = stocksTimeSeries!.Meta.Interval,
+            TimeZone = stocksTimeSeries.Meta.exchange_timezone,
+            StockValues = stocksTimeSeries.Values.Select(x => new StockSnapshot()
+            {
+                Close = x.Close,
+                Datetime = x.DateTime,
+                High = x.High,
+                Low = x.Low,
+                Open = x.Open,
+            }).ToArray(),
+            Stock = newStock
+        };
+        return timeSeriesSnapShot;
     }
 }

@@ -1,6 +1,8 @@
+using Application.Common.Intefaces;
+
 namespace Application.Stocks.Dtos;
 
-public sealed class TimeSeriesDto
+public sealed class TimeSeriesDto  
 {
     public required string Interval { get; init; }
     public string? TimeZone { get; init; }

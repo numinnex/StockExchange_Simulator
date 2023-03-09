@@ -19,6 +19,8 @@ public static class ConfigureServices
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services,
         IConfiguration configuration)
     {
+
+        services.AddMemoryCache();
         
         services.AddScoped<AuditableEntitySaveChanges>();
         services.AddSingleton<IStockClient, StockClient>();

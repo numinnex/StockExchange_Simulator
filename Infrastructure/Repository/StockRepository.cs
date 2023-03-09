@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using Application.Common.Interfaces.Repository;
 using Domain.Entities;
@@ -15,7 +16,7 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
         _ctx = ctx;
     }
 
-    public override async Task<List<Stock>> GetAllAsync(CancellationToken token, Expression<Func<Stock, bool>>? filter = null, string? includeProperties = null)
+    public async Task<List<Stock>> GetAllAsync(CancellationToken token, Expression<Func<Stock, bool>>? filter = null, string? includeProperties = null)
     {
         IQueryable<Stock> query = _ctx.Stocks;
 
@@ -25,11 +26,11 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
             {
                 if (prop == "TimeSeries")
                 {
-                    query.Include(x => x.TimeSeries).ThenInclude(x => x.StockValues);
+                    query = query.Include(x => x.TimeSeries).ThenInclude(x => x.StockValues);
                 }
                 else
                 {
-                    query.Include(prop);
+                    query = query.Include(prop);
                 }
             }
         }

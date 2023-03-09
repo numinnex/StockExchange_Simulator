@@ -40,9 +40,9 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
         stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol);
         if (!stocks.Any())
         {
-            return Result<List<StockDto>>.Failure(new List<StockDto>(), new Error[]
+            return Result<List<StockDto>>.Failure( new []
             {
-                new Error() { Code = "empty_col" , Message = "The collection was empty"}
+                new Error() { Code = "Not Found" , Message = "The collection was empty"}
             });
         }
         
