@@ -1,6 +1,5 @@
 using Application.Common.Intefaces;
 using Application.Common.Models;
-using Application.Stocks.Dtos;
 using FluentValidation;
 using MediatR;
 

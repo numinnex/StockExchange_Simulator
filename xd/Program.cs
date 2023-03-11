@@ -26,7 +26,7 @@ var secondRequest = new HttpRequestMessage()
 using (var response = await client.SendAsync(request))
 {
     response.EnsureSuccessStatusCode();
-    var body = await response.Content.ReadFromJsonAsync<StockResponse>();
+    var body = await response.Content.ReadFromJsonAsync<StockApiResponse>();
     Console.WriteLine();
 }
 

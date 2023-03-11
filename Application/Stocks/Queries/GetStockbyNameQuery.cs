@@ -1,19 +1,20 @@
 using Application.Common.Intefaces;
 using Application.Common.Interfaces.Repository;
 using Application.Common.Models;
-using Application.Stocks.Dtos;
+using Application.Common.Models.ReadModels;
 using AutoMapper;
+using Contracts.V1.Responses;
 using MediatR;
 
 namespace Application.Stocks.Queries;
 
 
-public sealed record GetStockbyNameQuery : IRequest<Result<List<StockDto>>>
+public sealed record GetStockbyNameQuery : IRequest<Result<List<StockResponse>>>
 {
     public required string Symbol { get; init; } 
 }
 
-public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQuery, Result<List<StockDto>>>
+public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQuery, Result<List<StockResponse>>>
 {
     private readonly IMapper _mapper;
     private readonly IStockRepository _stockRepository;
@@ -26,21 +27,21 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
         _stockClient = stockClient;
     }
     
-    public async Task<Result<List<StockDto>>> Handle(GetStockbyNameQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<StockResponse>>> Handle(GetStockbyNameQuery request, CancellationToken cancellationToken)
     {
         var stocks = (await _stockRepository.
             GetAllAsync(cancellationToken,x => x.Symbol == request.Symbol , "TimeSeries,Trades"));
 
         if (stocks.Any())
         {
-            var stocksMapped = _mapper.Map<List<StockDto>>(stocks);
-            return Result<List<StockDto>>.Success(stocksMapped);
+            var stocksMapped = _mapper.Map<List<StockResponse>>(stocks);
+            return Result<List<StockResponse>>.Success(stocksMapped);
         }
 
         stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol);
         if (!stocks.Any())
         {
-            return Result<List<StockDto>>.Failure( new []
+            return Result<List<StockResponse>>.Failure( new []
             {
                 new Error() { Code = "Not Found" , Message = "The collection was empty"}
             });
@@ -49,7 +50,7 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
         await _stockRepository.AddRangeAsync(stocks, cancellationToken);
         await _stockRepository.SaveChangesAsync(cancellationToken);
         
-        var stocksFromApiMapped = _mapper.Map<List<StockDto>>(stocks);
-        return Result<List<StockDto>>.Success(stocksFromApiMapped);
+        var stocksFromApiMapped = _mapper.Map<List<StockResponse>>(stocks);
+        return Result<List<StockResponse>>.Success(stocksFromApiMapped);
     }
 }

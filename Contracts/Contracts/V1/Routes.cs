@@ -1,4 +1,4 @@
-namespace Contracts;
+namespace Contracts.V1;
 
 public static class Routes
 {
@@ -11,5 +11,11 @@ public static class Routes
     {
         public const string GetBySymbol = Base + "/stocks/{symbol}";
         public const string GetRealtimePrice = Base + "/stocks/price/{symbol}";
+    }
+    public static class Identity
+    {
+        public const string Login = Base + "/identity/login";
+        public const string Register = Base + "/identity/register";
+        public const string Refresh = Base + "/identity/refresh";
     }
 }

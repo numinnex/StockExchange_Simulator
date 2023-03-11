@@ -23,7 +23,7 @@ public sealed class StockClient : IStockClient
     public async Task<List<Stock>> GetStocksBySymbolAsync(string name)
     {
         //TODO - Refactor => Move stock price and stock timeseries to seperate services && move mapping response to domain
-        var stocksResponse = await _client.GetFromJsonAsync<StockResponse>($"stocks?symbol={name}&format=json");
+        var stocksResponse = await _client.GetFromJsonAsync<StockApiResponse>($"stocks?symbol={name}&format=json");
 
         if (stocksResponse!.Data.Any())
         {

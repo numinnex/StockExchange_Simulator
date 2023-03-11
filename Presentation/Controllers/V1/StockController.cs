@@ -1,6 +1,7 @@
 using Application.Common.Intefaces;
 using Application.Stocks.Queries;
 using Contracts;
+using Contracts.V1;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

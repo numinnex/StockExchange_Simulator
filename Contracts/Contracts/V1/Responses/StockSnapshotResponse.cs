@@ -1,8 +1,6 @@
-using Application.Common.Intefaces;
+namespace Contracts.V1.Responses;
 
-namespace Application.Stocks.Dtos;
-
-public sealed class StockSnapShotDto  
+public sealed class StockSnapshotResponse
 {
     public required double  Close { get; init; }
     public required double  Low { get; init; }
