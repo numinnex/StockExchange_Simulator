@@ -1,6 +1,6 @@
 namespace Domain.Auth;
 
-public sealed class AuthenticationResult
+public sealed class AuthenticationResult 
 {
     public string? Token { get; init; } 
     public required bool Success { get; init; }

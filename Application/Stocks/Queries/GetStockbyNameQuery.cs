@@ -9,9 +9,8 @@ using MediatR;
 namespace Application.Stocks.Queries;
 
 
-public sealed record GetStockbyNameQuery : IRequest<Result<List<StockResponse>>>
+public sealed record GetStockbyNameQuery(string Symbol) : IRequest<Result<List<StockResponse>>>
 {
-    public required string Symbol { get; init; } 
 }
 
 public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQuery, Result<List<StockResponse>>>

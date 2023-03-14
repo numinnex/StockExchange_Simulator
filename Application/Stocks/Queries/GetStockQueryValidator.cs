@@ -8,6 +8,5 @@ public sealed class GetStockQueryValidator : AbstractValidator<GetStockbyNameQue
     {
         RuleFor(x => x.Symbol).NotEmpty().MaximumLength(10);
         RuleFor(x => x.Symbol).NotNull();
-        RuleFor(x => x.Symbol).MinimumLength(1);
     } 
 }

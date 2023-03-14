@@ -1,4 +1,5 @@
 using System.Reflection;
+using Domain.Auth;
 using Domain.Entities;
 using Domain.Identity;
 using Infrastructure.Database.Interceptors;
@@ -23,6 +24,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Trade> Trades => Set<Trade>();
     public DbSet<StockSnapshot> StockSnapshots => Set<StockSnapshot>();
     public DbSet<TimeSeries> TimeSeries => Set<TimeSeries>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
 
     protected override void OnModelCreating(ModelBuilder builder)

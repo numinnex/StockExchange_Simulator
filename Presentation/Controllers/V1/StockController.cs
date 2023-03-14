@@ -1,6 +1,5 @@
 using Application.Common.Intefaces;
 using Application.Stocks.Queries;
-using Contracts;
 using Contracts.V1;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +21,7 @@ public class StockController : ControllerBase
     [HttpGet(Routes.Stocks.GetBySymbol)]
     public async Task<IActionResult> GetBySymbol([FromRoute] string symbol)
     {
-        var response = await _mediator.Send(new GetStockbyNameQuery() {Symbol = symbol});
+        var response = await _mediator.Send(new GetStockbyNameQuery(symbol));
         
         if(response.IsSuccess)
             return Ok(response.Value);
