@@ -2,6 +2,8 @@ namespace Domain.Enums;
 
 public enum TradeType
 {
-    Buy,
-    Sell
+    BuyMarket,
+    BuyLimit,
+    SellLimit,
+    SellMarket,
 }

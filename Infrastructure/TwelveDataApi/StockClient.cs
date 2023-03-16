@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using Application.Common.Intefaces;
+using Application.Common.Interfaces;
 using Application.Common.Models.ReadModels;
 using Domain.Entities;
 using Domain.ValueObjects;
@@ -23,14 +23,15 @@ public sealed class StockClient : IStockClient
     public async Task<List<Stock>> GetStocksBySymbolAsync(string name)
     {
         //TODO - Refactor => Move stock price and stock timeseries to seperate services && move mapping response to domain
-        var stocksResponse = await _client.GetFromJsonAsync<StockApiResponse>($"stocks?symbol={name}&format=json");
+        var stocksResponse = await _client
+            .GetFromJsonAsync<StockApiResponse>($"stocks?country=United%20States&symbol={name}&format=json");
 
         if (stocksResponse!.Data.Any())
         {
             var stockPriceResponse = await _client.GetAsync($"price?symbol={name}&format=json");
             var stocksTimeSeriesResponse =
                 await _client.GetFromJsonAsync<TimeSeriesResponse>(
-                    $"time_series?interval=1day&symbol={name}&format=json&outputsize=30");
+                    $"time_series?interval=1day&symbol={name}&format=json&outputsize=730");
             double price = 0.00;
 
             if (!stockPriceResponse.IsSuccessStatusCode)
@@ -98,6 +99,7 @@ public sealed class StockClient : IStockClient
                 Datetime = x.DateTime,
                 High = x.High,
                 Low = x.Low,
+                Volume = x.Volume,
                 Open = x.Open,
             }).ToArray(),
             Stock = newStock

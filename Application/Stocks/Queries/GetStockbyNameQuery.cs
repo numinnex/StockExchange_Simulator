@@ -1,4 +1,4 @@
-using Application.Common.Intefaces;
+using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repository;
 using Application.Common.Models;
 using Application.Common.Models.ReadModels;
@@ -9,9 +9,7 @@ using MediatR;
 namespace Application.Stocks.Queries;
 
 
-public sealed record GetStockbyNameQuery(string Symbol) : IRequest<Result<List<StockResponse>>>
-{
-}
+public sealed record GetStockbyNameQuery(string Symbol) : IRequest<Result<List<StockResponse>>>;
 
 public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQuery, Result<List<StockResponse>>>
 {

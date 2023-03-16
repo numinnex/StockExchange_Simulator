@@ -111,6 +111,12 @@ file sealed class TradeTableConfiguration : IEntityTypeConfiguration<Trade>
     {
         builder.OwnsOne(x => x.Price 
         , a => a.Property(x => x.Value).HasColumnType("money"));
+
+        builder.HasOne(x => x.Stock).WithMany(x => x.Trades)
+            .HasForeignKey(x => x.StockId);
+        
+        builder.HasOne(x => x.User).WithMany(x => x.Trades)
+            .HasForeignKey(x => x.UserId);
     }
 }
 

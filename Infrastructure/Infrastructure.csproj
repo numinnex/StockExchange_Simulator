@@ -31,7 +31,6 @@
     <ItemGroup>
       <Folder Include="PortfolioServices" />
       <Folder Include="StockServices" />
-      <Folder Include="TradeServices" />
     </ItemGroup>
 
 </Project>

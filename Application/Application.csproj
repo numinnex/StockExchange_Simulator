@@ -22,6 +22,7 @@
     <ItemGroup>
       <Folder Include="Auth\Queries" />
       <Folder Include="Stocks\Commands" />
+      <Folder Include="Trades\Queries" />
     </ItemGroup>
 
 </Project>

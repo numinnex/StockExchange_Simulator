@@ -1,5 +1,5 @@
-using Application.Common.Intefaces;
 using Application.Common.Models;
+using Application.Common.Util;
 using FluentValidation;
 using MediatR;
 

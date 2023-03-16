@@ -1,8 +1,6 @@
-using Application.Common.Models.ReadModels;
-using Application.Stocks.Queries;
 using Domain.Entities;
 
-namespace Application.Common.Intefaces;
+namespace Application.Common.Interfaces;
 
 public interface IStockClient
 {

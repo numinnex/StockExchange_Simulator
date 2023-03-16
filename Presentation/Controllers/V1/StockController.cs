@@ -1,6 +1,9 @@
-using Application.Common.Intefaces;
+using Application.Common.Interfaces;
 using Application.Stocks.Queries;
+using Application.Trades.Commands;
 using Contracts.V1;
+using Contracts.V1.Requests;
+using Contracts.V1.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,9 +34,16 @@ public class StockController : ControllerBase
         return BadRequest(response.Errors);
     }
 
-    [HttpGet(Routes.Stocks.GetRealtimePrice)]
-    public async Task<double> GetRealtimePrice([FromRoute] string symbol )
+    [HttpPost(Routes.Stocks.BuyMarket)]
+    public async Task<IActionResult> BuyMarket([FromBody] BuyMarketRequest request)
     {
-        return await _client.GetRealtimePrice(symbol);
+        var response = await _mediator.Send(new BuyMarketCommand(request.StockId , request.Quantity 
+        , request.UserId));
+
+        if (response.IsSuccess)
+        {
+            return Ok(response.Value);
+        }
+        return BadRequest(response.Errors); 
     }
 }

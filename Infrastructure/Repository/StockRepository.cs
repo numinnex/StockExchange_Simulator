@@ -41,18 +41,35 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
         return await query.ToListAsync(token);
     }
 
-    public void Update(Stock stock )
+    public void UpdateAsync(Stock stock  )
     {
         _ctx.Stocks.Update( stock );
-    }
-
-    public async Task SaveChangesAsync(CancellationToken token)
-    {
-        await _ctx.SaveChangesAsync(token);
+        
     }
 
     public async Task AddRangeAsync(IEnumerable<Stock> entities, CancellationToken token)
     {
         await _ctx.Stocks.AddRangeAsync(entities,token);
+    }
+
+    public async Task SaveChangesAsync(CancellationToken token)
+    {
+        bool saveFailed;
+        do
+        {
+            saveFailed = false;
+            try
+            {
+                await _ctx.SaveChangesAsync(token);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                saveFailed = true;
+
+                var entry = ex.Entries.Single();
+                entry.OriginalValues.SetValues((await entry.GetDatabaseValuesAsync(token)));
+            }
+
+        } while (saveFailed);
     }
 }
