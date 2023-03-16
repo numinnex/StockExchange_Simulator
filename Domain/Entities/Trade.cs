@@ -14,5 +14,6 @@ public sealed class Trade : Entity
     public required DateTime Timestamp { get; init; }
     public required string UserId { get; init; }
     public ApplicationUser User { get; init; } 
+    public required TradeStatus Status { get; init; }
     public required TradeType Type { get; init; }
 }

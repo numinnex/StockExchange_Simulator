@@ -20,7 +20,7 @@ public class Repository<T> : IRepository<T> where T : class
         await _dbSet.AddAsync(entity, token);
     }
 
-    public async Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>> filter, CancellationToken token,string? includeProperties = null)
+    public async Task<T?> GetFirstOrDefaultAsync(Expression<Func<T, bool>> filter, CancellationToken token,string? includeProperties = null)
     {
         IQueryable<T> query = _dbSet;
 

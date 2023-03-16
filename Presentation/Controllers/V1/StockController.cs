@@ -46,4 +46,19 @@ public class StockController : ControllerBase
         }
         return BadRequest(response.Errors); 
     }
+
+    [HttpPost(Routes.Stocks.SellMarket)]
+    public async Task<IActionResult> SellMarket([FromBody] SellMarketRequest request)
+    {
+        var response = await _mediator.Send(new SellMarketCommand(request.StockId, request.Quantity 
+       , request.UserId));
+
+        if (response.IsSuccess)
+        {
+            return Ok(response.Value); 
+        }
+        return BadRequest(response.Errors);
+    }
+    
+    
 }
