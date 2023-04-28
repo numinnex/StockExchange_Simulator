@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repository;
 
-public sealed class TradeRepository  : ITradeRepository
+public sealed class TradeRepository : ITradeRepository
 {
     private readonly ApplicationDbContext _ctx;
 
@@ -13,6 +13,7 @@ public sealed class TradeRepository  : ITradeRepository
     {
         _ctx = ctx;
     }
+    //TODO -- Add transaction
     public async Task AddBuyTradeAsync(Trade trade, CancellationToken cancellationToken)
     {
         await _ctx.Trades.AddAsync(trade, cancellationToken);

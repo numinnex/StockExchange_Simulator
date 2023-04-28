@@ -15,7 +15,7 @@ public sealed class ValidationBehaviorTest
     [Fact]
     public async Task ShouldHaveErrorsWhenSymbolIsEmpty()
     {
-        var query = new GetStockbyNameQuery(){Symbol = ""};
+        var query = new GetStockbyNameQuery("");
         var result = await _validator.TestValidateAsync(query);
 
         result.ShouldHaveValidationErrorFor(query => query.Symbol);
@@ -23,7 +23,7 @@ public sealed class ValidationBehaviorTest
     [Fact]
     public async Task ShouldHaveErrorsWhenNull()
     {
-        var query = new GetStockbyNameQuery(){Symbol = null};
+        var query = new GetStockbyNameQuery(null);
         var result = await _validator.TestValidateAsync(query);
 
         result.ShouldHaveValidationErrorFor(query => query.Symbol);
@@ -31,7 +31,7 @@ public sealed class ValidationBehaviorTest
     [Fact]
     public async Task ShouldHaveErrorsWhenLengthGreaterThan10()
     {
-        var query = new GetStockbyNameQuery(){Symbol = "jaskdhkawudahsduwajksd"};
+        var query = new GetStockbyNameQuery("jashdawhkjdgahdvadhgjasdw");
         var result = await _validator.TestValidateAsync(query);
 
         result.ShouldHaveValidationErrorFor(query => query.Symbol);

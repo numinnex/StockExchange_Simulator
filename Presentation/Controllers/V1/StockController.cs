@@ -37,6 +37,7 @@ public class StockController : ControllerBase
     [HttpPost(Routes.Stocks.BuyMarket)]
     public async Task<IActionResult> BuyMarket([FromBody] BuyMarketRequest request)
     {
+        
         var response = await _mediator.Send(new BuyMarketCommand(request.StockId , request.Quantity 
         , request.UserId));
 

@@ -44,7 +44,7 @@ private readonly ITradeRepository _tradeRepository;
             UserId = userId,
             StockId = stockId,
             Timestamp = _dateTimeProvider.Now,
-            Status = TradeStatus.Pending,
+            Status = TradeStatus.InQueue,
             Price = new Price
             {
                 Value = stock.Price.Value * quantity,
@@ -80,7 +80,7 @@ private readonly ITradeRepository _tradeRepository;
             UserId = userId,
             StockId = stockId,
             Timestamp = _dateTimeProvider.Now,
-            Status = TradeStatus.Pending,
+            Status = TradeStatus.InQueue,
             Price = new Price
             {
                 Value = stock.Price.Value * quantity,

@@ -27,18 +27,18 @@ public static class ConfigureServices
     {
 
         services.AddMemoryCache();
-        
+
         services.AddScoped<AuditableEntitySaveChanges>();
         //services.AddSingleton<IStockClient, StockClient>();
         services.AddScoped<ITradeService, TradeService>();
 
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();
-        
+
         services.AddTransient<TwelveDataHeaderMiddleware>();
         services.AddTransient<IDateTimeProvider, DateTimeProvider>();
-        
-        
+
+
         services.ConfigureOptions<TwelveDataApiOptionSetup>();
         services.ConfigureOptions<JwtSettingsOptionsSetup>();
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -46,8 +46,8 @@ public static class ConfigureServices
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
                 builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
         });
-        
-        
+
+
 
 
         services.AddHttpClient<IStockClient, StockClient>((sp, client) =>
@@ -68,7 +68,7 @@ public static class ConfigureServices
         services.AddScoped<IIdentityService, IdentityService>();
 
         var jwtSettings = configuration.GetSection(nameof(JwtSettingsOptions));
-        
+
         var tokenValidationParamters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -79,7 +79,7 @@ public static class ConfigureServices
             ValidateLifetime = true,
         };
         services.AddSingleton(tokenValidationParamters);
-        
+
 
         services.AddAuthentication(x =>
         {

@@ -2,7 +2,7 @@ namespace Domain.Enums;
 
 public enum TradeStatus
 {
-    Pending,
-    Accepted,
+    InQueue,
+    Filled,
     Failed
 }

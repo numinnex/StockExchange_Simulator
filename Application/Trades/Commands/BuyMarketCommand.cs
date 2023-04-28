@@ -5,8 +5,9 @@ using MediatR;
 
 namespace Application.Trades.Commands;
 
-public sealed record BuyMarketCommand(string StockId, int Quantity, string UserId) : IRequest<Result<BuyResponse>>;
-
+public record BuyMarketCommand(string StockId , int Quantity, string UserId) : IRequest<Result<BuyResponse>>
+{
+}
 public sealed class BuyMarketCommandHandler : IRequestHandler<BuyMarketCommand, Result<BuyResponse>>
 {
     private readonly ITradeService _tradeService;
