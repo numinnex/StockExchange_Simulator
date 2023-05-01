@@ -8,7 +8,6 @@ using Infrastructure.Database.Interceptors;
 using Infrastructure.DateTimeService;
 using Infrastructure.Options;
 using Infrastructure.Repository;
-using Infrastructure.TradeServices;
 using Infrastructure.TwelveDataApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -30,7 +29,6 @@ public static class ConfigureServices
 
         services.AddScoped<AuditableEntitySaveChanges>();
         //services.AddSingleton<IStockClient, StockClient>();
-        services.AddScoped<ITradeService, TradeService>();
 
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();

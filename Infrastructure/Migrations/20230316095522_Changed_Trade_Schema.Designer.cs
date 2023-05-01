@@ -4,6 +4,7 @@ using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230316095522_Changed_Trade_Schema")]
+    partial class Changed_Trade_Schema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,43 +57,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens", "db_stock");
-                });
-
-            modelBuilder.Entity("Domain.Entities.OrderMarket", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsBuy")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("StockId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("TradeCondition")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StockId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MarketTrades", "db_stock");
                 });
 
             modelBuilder.Entity("Domain.Entities.Portfolio", b =>
@@ -214,6 +180,37 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TimeSeries", "db_stock");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Trade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StockId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StockId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Trades", "db_stock");
                 });
 
             modelBuilder.Entity("Domain.Identity.ApplicationUser", b =>
@@ -425,80 +422,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.OrderMarket", b =>
-                {
-                    b.HasOne("Domain.Entities.Stock", "Stock")
-                        .WithMany("MarketOrders")
-                        .HasForeignKey("StockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Identity.ApplicationUser", "User")
-                        .WithMany("MarketOrders")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("Amount", "OrderAmount", b1 =>
-                        {
-                            b1.Property<Guid>("OrderMarketId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Value")
-                                .HasColumnType("money");
-
-                            b1.HasKey("OrderMarketId");
-
-                            b1.ToTable("MarketTrades", "db_stock");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
-                        });
-
-                    b.OwnsOne("Domain.ValueObjects.Price", "Price", b1 =>
-                        {
-                            b1.Property<Guid>("OrderMarketId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Value")
-                                .HasColumnType("money");
-
-                            b1.HasKey("OrderMarketId");
-
-                            b1.ToTable("MarketTrades", "db_stock");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
-                        });
-
-                    b.OwnsOne("Quantity", "OpenQuantity", b1 =>
-                        {
-                            b1.Property<Guid>("OrderMarketId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Value")
-                                .HasColumnType("decimal");
-
-                            b1.HasKey("OrderMarketId");
-
-                            b1.ToTable("MarketTrades", "db_stock");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
-                        });
-
-                    b.Navigation("OpenQuantity");
-
-                    b.Navigation("OrderAmount");
-
-                    b.Navigation("Price")
-                        .IsRequired();
-
-                    b.Navigation("Stock");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Domain.Entities.Portfolio", b =>
                 {
                     b.HasOne("Domain.Identity.ApplicationUser", "User")
@@ -602,6 +525,44 @@ namespace Infrastructure.Migrations
                     b.Navigation("TimeSeries");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Trade", b =>
+                {
+                    b.HasOne("Domain.Entities.Stock", "Stock")
+                        .WithMany("Trades")
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Identity.ApplicationUser", "User")
+                        .WithMany("Trades")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Domain.ValueObjects.Price", "Price", b1 =>
+                        {
+                            b1.Property<Guid>("TradeId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("TradeId");
+
+                            b1.ToTable("Trades", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeId");
+                        });
+
+                    b.Navigation("Price")
+                        .IsRequired();
+
+                    b.Navigation("Stock");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -655,7 +616,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Stock", b =>
                 {
-                    b.Navigation("MarketOrders");
+                    b.Navigation("Trades");
                 });
 
             modelBuilder.Entity("Domain.Entities.TimeSeries", b =>
@@ -667,9 +628,9 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Identity.ApplicationUser", b =>
                 {
-                    b.Navigation("MarketOrders");
-
                     b.Navigation("Portfolios");
+
+                    b.Navigation("Trades");
                 });
 #pragma warning restore 612, 618
         }

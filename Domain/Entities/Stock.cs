@@ -10,9 +10,9 @@ public sealed class Stock : Entity
     public required Price Price { get; set; }
     public required string Currency { get; init; }
     public required string Country { get; init; }
-    public Change? Change { get; set; } 
+    public Change? Change { get; set; }
     public double? TrendingScore { get; set; }
-    public IEnumerable<Trade>? Trades { get; set; }
+    public IEnumerable<OrderMarket>? MarketOrders { get; set; }
     public int? TimeSeriesId { get; set; }
     public TimeSeries? TimeSeries { get; set; }
 }

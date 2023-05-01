@@ -15,7 +15,7 @@ public sealed class StockClient : IStockClient
     private readonly HttpClient _client;
     private readonly IMemoryCache _cache;
 
-    public StockClient(HttpClient client, IMemoryCache cache )
+    public StockClient(HttpClient client, IMemoryCache cache)
     {
         _client = client;
         _cache = cache;
@@ -40,9 +40,9 @@ public sealed class StockClient : IStockClient
             }
 
             price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
-            
+
             var stocksResult = new List<Stock>();
-            
+
             foreach (var stockReadModel in stocksResponse.Data.ToArray())
             {
                 var newStock = MapStockResponse(stockReadModel, price);
@@ -50,13 +50,13 @@ public sealed class StockClient : IStockClient
                 newStock.TimeSeries = timeSeries;
                 stocksResult.Add(newStock);
             }
-           
+
             return stocksResult;
         }
         return Enumerable.Empty<Stock>().ToList();
     }
 
-    public async Task<double> GetRealtimePrice(string symbol) 
+    public async Task<double> GetRealtimePrice(string symbol)
     {
         if (_cache.TryGetValue(symbol, out double stockPrice))
         {
@@ -68,8 +68,8 @@ public sealed class StockClient : IStockClient
             var price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
             _cache.Set(symbol, price, new MemoryCacheEntryOptions()
             {
-               AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
-            } );
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
+            });
             return price;
         }
         return _cache.Get<double>(symbol);
@@ -83,7 +83,7 @@ public sealed class StockClient : IStockClient
             Country = stockReadModel.Country,
             Currency = stockReadModel.Currency,
             Symbol = stockReadModel.Symbol,
-            Price = new Price() { Value = price },
+            Price = price
         };
         return newStock;
     }

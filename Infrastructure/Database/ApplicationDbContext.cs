@@ -13,7 +13,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     private readonly AuditableEntitySaveChanges _auditableEntitySaveChangesInterceptor;
 
-    public ApplicationDbContext(AuditableEntitySaveChanges auditableEntitySaveChangesInterceptor, 
+    public ApplicationDbContext(AuditableEntitySaveChanges auditableEntitySaveChangesInterceptor,
         DbContextOptions<ApplicationDbContext> options) : base(options)
     {
         _auditableEntitySaveChangesInterceptor = auditableEntitySaveChangesInterceptor;
@@ -21,7 +21,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Stock> Stocks => Set<Stock>();
     public DbSet<Portfolio> Portfolios => Set<Portfolio>();
-    public DbSet<Trade> Trades => Set<Trade>();
+    public DbSet<OrderMarket> MarketTrades => Set<OrderMarket>();
     public DbSet<StockSnapshot> StockSnapshots => Set<StockSnapshot>();
     public DbSet<TimeSeries> TimeSeries => Set<TimeSeries>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -41,7 +41,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         base.OnConfiguring(optionsBuilder);
     }
 }
-file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>{
+file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>
+{
     public void Configure(EntityTypeBuilder<Stock> builder)
     {
         builder.Property(x => x.Name)
@@ -57,9 +58,9 @@ file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>{
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.OwnsOne(x => x.Change ,
+        builder.OwnsOne(x => x.Change,
             a => a.Property(x => x.Value).HasColumnType("money"));
-        builder.OwnsOne(x => x.Price ,
+        builder.OwnsOne(x => x.Price,
             a => a.Property(x => x.Value).HasColumnType("money"));
         builder.HasOne(x => x.TimeSeries)
             .WithOne(x => x.Stock)
@@ -101,21 +102,27 @@ file sealed class PortfolioTableConfiguration : IEntityTypeConfiguration<Portfol
             .HasMaxLength(300)
             .IsRequired();
         builder.Property(x => x.TotalValue).HasColumnType("money");
-        builder.OwnsMany(x => x.Positions );
+        builder.OwnsMany(x => x.Positions);
     }
 }
 
-file sealed class TradeTableConfiguration : IEntityTypeConfiguration<Trade>
+file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<OrderMarket>
 {
-    public void Configure(EntityTypeBuilder<Trade> builder)
+    public void Configure(EntityTypeBuilder<OrderMarket> builder)
     {
-        builder.OwnsOne(x => x.Price 
+        builder.OwnsOne(x => x.Price
         , a => a.Property(x => x.Value).HasColumnType("money"));
 
-        builder.HasOne(x => x.Stock).WithMany(x => x.Trades)
+        builder.OwnsOne(x => x.OrderAmount
+        , a => a.Property(x => x.Value).HasColumnType("money"));
+
+        builder.OwnsOne(x => x.OpenQuantity
+        , a => a.Property(x => x.Value).HasColumnType("decimal"));
+
+        builder.HasOne(x => x.Stock).WithMany(x => x.MarketOrders)
             .HasForeignKey(x => x.StockId);
-        
-        builder.HasOne(x => x.User).WithMany(x => x.Trades)
+
+        builder.HasOne(x => x.User).WithMany(x => x.MarketOrders)
             .HasForeignKey(x => x.UserId);
     }
 }

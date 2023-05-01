@@ -13,16 +13,13 @@ public sealed class TradeRepository : ITradeRepository
     {
         _ctx = ctx;
     }
+
     //TODO -- Add transaction
-    public async Task AddBuyTradeAsync(Trade trade, CancellationToken cancellationToken)
+    public Task AddMarketOrderAsync(OrderMarket order, CancellationToken cancellationToken)
     {
-        await _ctx.Trades.AddAsync(trade, cancellationToken);
+        throw new NotImplementedException();
     }
 
-    public async Task AddSellTradeAsync(Trade trade, CancellationToken cancellationToken)
-    {
-        await _ctx.Trades.AddAsync(trade, cancellationToken);
-    }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {

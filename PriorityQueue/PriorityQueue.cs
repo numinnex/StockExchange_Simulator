@@ -1,9 +1,8 @@
 namespace ConcurrentHeap;
-
-public sealed class ConcurrentHeap<T>
+public class ConcurrentHeap<T>
 {
     private readonly object _sync = new object();
-    
+
     private List<T> _heap;
     private readonly Func<T, T, bool> _compare;
     private int Count
@@ -16,11 +15,13 @@ public sealed class ConcurrentHeap<T>
             }
         }
     }
+
     public ConcurrentHeap(Func<T, T, bool> compare)
     {
         _heap = new List<T>();
         _compare = compare;
     }
+
     public void Enqueue(T item)
     {
         lock (_sync)
@@ -49,7 +50,7 @@ public sealed class ConcurrentHeap<T>
     }
     public void PrintHeap()
     {
-        Console.WriteLine(string.Join(", ", _heap)); 
+        Console.WriteLine(string.Join(", ", _heap));
     }
     private void HeapifyDown(int idx)
     {
@@ -69,13 +70,13 @@ public sealed class ConcurrentHeap<T>
         {
             _heap[idx] = rightValue;
             _heap[rightIdx] = value;
-            HeapifyDown(rightIdx); 
+            HeapifyDown(rightIdx);
         }
-        else if(_compare(rightValue, leftValue) && _compare(value, leftValue))
+        else if (_compare(rightValue, leftValue) && _compare(value, leftValue))
         {
             _heap[idx] = leftValue;
             _heap[leftIdx] = value;
-            HeapifyDown(leftIdx); 
+            HeapifyDown(leftIdx);
         }
     }
 
@@ -107,5 +108,5 @@ public sealed class ConcurrentHeap<T>
     private static int RightChildIndex(int i)
     {
         return 2 * i + 2;
-    } 
+    }
 }

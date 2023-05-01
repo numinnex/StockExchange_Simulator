@@ -3,7 +3,6 @@ using Application.Stocks.Queries;
 using Application.Trades.Commands;
 using Contracts.V1;
 using Contracts.V1.Requests;
-using Contracts.V1.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,8 +24,8 @@ public class StockController : ControllerBase
     public async Task<IActionResult> GetBySymbol([FromRoute] string symbol)
     {
         var response = await _mediator.Send(new GetStockbyNameQuery(symbol));
-        
-        if(response.IsSuccess)
+
+        if (response.IsSuccess)
             return Ok(response.Value);
         if (response.Errors.First().Code == "Not Found")
             return NotFound(response.Errors);
@@ -34,32 +33,18 @@ public class StockController : ControllerBase
         return BadRequest(response.Errors);
     }
 
-    [HttpPost(Routes.Stocks.BuyMarket)]
-    public async Task<IActionResult> BuyMarket([FromBody] BuyMarketRequest request)
+    [HttpPost(Routes.Stocks.OrderMarket)]
+    public async Task<IActionResult> MarketOrderTrade([FromBody] MarketOrderTradeRequest request)
     {
-        
-        var response = await _mediator.Send(new BuyMarketCommand(request.StockId , request.Quantity 
-        , request.UserId));
+
+        var response = await _mediator.Send(new MarketOrderCommand(request.StockId, request.Quantity
+        , request.UserId, request.IsBuy));
 
         if (response.IsSuccess)
         {
             return Ok(response.Value);
         }
-        return BadRequest(response.Errors); 
-    }
-
-    [HttpPost(Routes.Stocks.SellMarket)]
-    public async Task<IActionResult> SellMarket([FromBody] SellMarketRequest request)
-    {
-        var response = await _mediator.Send(new SellMarketCommand(request.StockId, request.Quantity 
-       , request.UserId));
-
-        if (response.IsSuccess)
-        {
-            return Ok(response.Value); 
-        }
         return BadRequest(response.Errors);
     }
-    
-    
+
 }
