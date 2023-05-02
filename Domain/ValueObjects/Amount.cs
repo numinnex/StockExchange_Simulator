@@ -6,6 +6,10 @@ public class Amount : ValueObject
     {
         Value = amount;
     }
+    public Amount()
+    {
+
+    }
     public decimal Value { get; set; }
 
     public override IEnumerable<object> GetAtomicValues()

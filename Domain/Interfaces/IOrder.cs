@@ -6,7 +6,7 @@ using Domain.ValueObjects;
 public interface IOrder
 {
     public bool IsBuy { get; init; }
-    public bool IsFilled { get; set; }
+    public bool IsFilled { get; }
     public Guid StockId { get; init; }
     public Quantity? OpenQuantity { get; set; }
     public Amount? OrderAmount { get; set; }

@@ -24,13 +24,13 @@ public class QuantityTrackingPriceLevel : IPriceLevel
 
     public void AddOrder(IOrder order)
     {
-        _quantity += order.OpenQuantity;
+        _quantity += order.OpenQuantity!;
         _orders.Add(order);
     }
 
     public bool Fill(IOrder order, Quantity quantity)
     {
-        if (order.OpenQuantity >= quantity)
+        if (order.OpenQuantity! >= quantity)
         {
             _quantity -= quantity;
             order.OpenQuantity -= quantity;

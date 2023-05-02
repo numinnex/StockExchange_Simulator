@@ -32,11 +32,11 @@ public sealed class StockClient : IStockClient
             var stocksTimeSeriesResponse =
                 await _client.GetFromJsonAsync<TimeSeriesResponse>(
                     $"time_series?interval=1day&symbol={name}&format=json&outputsize=730");
-            double price = 0.00;
+            decimal price = 0.00m;
 
             if (!stockPriceResponse.IsSuccessStatusCode)
             {
-                price = 0.00;
+                price = 0.00m;
             }
 
             price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
@@ -56,9 +56,9 @@ public sealed class StockClient : IStockClient
         return Enumerable.Empty<Stock>().ToList();
     }
 
-    public async Task<double> GetRealtimePrice(string symbol)
+    public async Task<decimal> GetRealtimePrice(string symbol)
     {
-        if (_cache.TryGetValue(symbol, out double stockPrice))
+        if (_cache.TryGetValue(symbol, out decimal stockPrice))
         {
             return stockPrice;
         }
@@ -72,10 +72,10 @@ public sealed class StockClient : IStockClient
             });
             return price;
         }
-        return _cache.Get<double>(symbol);
+        return _cache.Get<decimal>(symbol);
     }
 
-    private static Stock MapStockResponse(StockReadModel stockReadModel, double price)
+    private static Stock MapStockResponse(StockReadModel stockReadModel, decimal price)
     {
         var newStock = new Stock
         {

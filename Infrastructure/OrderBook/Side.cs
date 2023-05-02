@@ -6,9 +6,12 @@ public class Side<T> where T : class, IPriceLevel, new()
     public int PriceLevelCount => _priceLevels.Count;
     public IEnumerable<T> PriceLevels => _priceLevels;
 
-    public Side()
+    private IComparer<Price> _priceLevelComparer;
+
+    public Side(IComparer<Price> priceComparer, IComparer<T> priceLevelComparer)
     {
-        _priceLevels = new SortedSet<T>(PriceLevelComparer.Instance);
+        _priceLevelComparer = priceComparer;
+        _priceLevels = new SortedSet<T>(priceLevelComparer);
     }
     public void AddOrder(IOrder order, Price price)
     {
@@ -33,11 +36,15 @@ public class Side<T> where T : class, IPriceLevel, new()
         var priceLevelForSearch = new T();
         priceLevelForSearch.SetPrice(price);
         _priceLevels.TryGetValue(priceLevelForSearch, out T? priceLevel);
-        bool orderFilled = priceLevel!.Fill(order, quantity);
+
+        if (priceLevel is null)
+            return false;
+
+        bool orderFilled = priceLevel.Fill(order, quantity);
         RemovePriceLevelIfEmpty(priceLevel);
         return orderFilled;
     }
-    public bool CheckMarketOrderAmountCanBeFilled(Quantity orderAmount)
+    public bool CheckMarketOrderAmountCanBeFilled(Amount orderAmount)
     {
         Amount cummulativeOrderAmount = 0;
         foreach (var priceLevel in _priceLevels)
@@ -47,7 +54,7 @@ public class Side<T> where T : class, IPriceLevel, new()
                 break;
             }
 
-            cummulativeOrderAmount += (priceLevel.Quantity.Value * priceLevel.Price.Value);
+            cummulativeOrderAmount += (priceLevel.Quantity * priceLevel.Price);
         }
 
         return cummulativeOrderAmount >= orderAmount;
