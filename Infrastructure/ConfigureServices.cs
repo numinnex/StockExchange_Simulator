@@ -28,14 +28,16 @@ public static class ConfigureServices
         services.AddMemoryCache();
 
         services.AddScoped<AuditableEntitySaveChanges>();
-        //services.AddSingleton<IStockClient, StockClient>();
-
+        
+        services.AddSingleton<IStockClient, StockClient>();
+        services.AddSingleton<IMatchingEngine, MatchingEngine>();
+        
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();
-
+        services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<IFeeProvider, FeeProvider>();
+        
         services.AddTransient<TwelveDataHeaderMiddleware>();
-        services.AddTransient<IDateTimeProvider, DateTimeProvider>();
-
 
         services.ConfigureOptions<TwelveDataApiOptionSetup>();
         services.ConfigureOptions<JwtSettingsOptionsSetup>();
@@ -44,9 +46,6 @@ public static class ConfigureServices
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
                 builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
         });
-
-
-
 
         services.AddHttpClient<IStockClient, StockClient>((sp, client) =>
         {

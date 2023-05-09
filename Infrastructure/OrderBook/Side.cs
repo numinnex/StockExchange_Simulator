@@ -3,19 +3,22 @@ using Domain.ValueObjects;
 public class Side<T> where T : class, IPriceLevel, new()
 {
     private readonly SortedSet<T> _priceLevels;
+    private T? _bestPriceLevel;
+    private IComparer<Price> _priceComparer;
     public int PriceLevelCount => _priceLevels.Count;
     public IEnumerable<T> PriceLevels => _priceLevels;
+    public T? BestPriceLevel => _bestPriceLevel;
 
-    private IComparer<Price> _priceLevelComparer;
 
     public Side(IComparer<Price> priceComparer, IComparer<T> priceLevelComparer)
     {
-        _priceLevelComparer = priceComparer;
+        _priceComparer = priceComparer;
         _priceLevels = new SortedSet<T>(priceLevelComparer);
     }
     public void AddOrder(IOrder order, Price price)
     {
         var priceLevel = GetOrAddPriceLevel(price);
+        System.Console.WriteLine("Order added in Side");
         priceLevel.AddOrder(order);
     }
     public bool RemoveOrder(IOrder order, Price price)
@@ -72,10 +75,17 @@ public class Side<T> where T : class, IPriceLevel, new()
     {
         var priceLevelForSearch = new T();
         priceLevelForSearch.SetPrice(price);
-        if (_priceLevels.TryGetValue(priceLevelForSearch, out T? priceLevel))
+        if (!_priceLevels.TryGetValue(priceLevelForSearch, out T? priceLevel))
         {
-            return priceLevel;
+            priceLevel = new T();
+            priceLevel.SetPrice(price);
+            _priceLevels.Add(priceLevel);
+            if (_bestPriceLevel is null || _priceComparer.Compare(price, _bestPriceLevel.Price) < 0)
+            {
+                _bestPriceLevel = priceLevel;
+            }
+            System.Console.WriteLine("found price level");
         }
-        return new T();
+        return priceLevel;
     }
 }

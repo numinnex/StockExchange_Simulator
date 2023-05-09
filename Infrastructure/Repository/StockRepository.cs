@@ -72,4 +72,9 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
 
         } while (saveFailed);
     }
+
+    public Task<bool> ExistAsync(string id, CancellationToken token)
+    {
+        throw new NotImplementedException();
+    }
 }

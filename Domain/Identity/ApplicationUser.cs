@@ -6,5 +6,5 @@ namespace Domain.Identity;
 public sealed class ApplicationUser : IdentityUser
 {
     public IList<Portfolio>? Portfolios { get; set; }
-    public IList<OrderMarket>? MarketOrders { get; set; }
+    public IList<MarketOrder>? MarketOrders { get; set; }
 }

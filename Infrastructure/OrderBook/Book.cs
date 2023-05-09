@@ -1,4 +1,3 @@
-using Application.Common.Models;
 using Domain.Entities;
 using Domain.ValueObjects;
 
@@ -12,7 +11,6 @@ public class Book : IBook
     internal int AskPriceLevelCount => _asks.PriceLevelCount;
     internal int BidPriceLevelCount => _bids.PriceLevelCount;
 
-
     public Book()
     {
         _bids = new(PriceComparerDescending.Instance, PriceLevelComparerDescending.Instance);
@@ -21,7 +19,7 @@ public class Book : IBook
 
     public bool RemoveOrder(IOrder order, Price price)
     {
-        if (order is OrderMarket marketOrder)
+        if (order is MarketOrder marketOrder)
         {
             var removed = RemoveMarketOrder(marketOrder);
             if (!removed)
@@ -32,7 +30,7 @@ public class Book : IBook
         }
         return true;
     }
-    private bool RemoveMarketOrder(OrderMarket order)
+    private bool RemoveMarketOrder(MarketOrder order)
     {
         var removed = false;
         if (order.IsBuy)
@@ -46,11 +44,12 @@ public class Book : IBook
 
     public bool AddOrder(IOrder order, Price price)
     {
-        if (order is OrderMarket marketOrder)
+        if (order is MarketOrder marketOrder)
         {
             try
             {
                 AddMarketOrder(marketOrder);
+                System.Console.WriteLine("Order added in Quantity");
             }
             catch
             {
@@ -60,7 +59,11 @@ public class Book : IBook
         }
         return true;
     }
-    private void AddMarketOrder(OrderMarket order)
+    public IOrder? GetBestOffer(bool isBuy)
+    {
+        return isBuy ? _bids.BestPriceLevel?.First : _asks.BestPriceLevel?.First;
+    }
+    private void AddMarketOrder(MarketOrder order)
     {
         var side = order.IsBuy ? _bids : _asks;
         side.AddOrder(order, order.Price);

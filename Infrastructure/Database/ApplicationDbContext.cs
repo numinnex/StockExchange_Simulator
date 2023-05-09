@@ -20,8 +20,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Stock> Stocks => Set<Stock>();
+    public DbSet<Fee> Fees => Set<Fee>();
     public DbSet<Portfolio> Portfolios => Set<Portfolio>();
-    public DbSet<OrderMarket> MarketTrades => Set<OrderMarket>();
+    public DbSet<MarketOrder> MarketTrades => Set<MarketOrder>();
     public DbSet<StockSnapshot> StockSnapshots => Set<StockSnapshot>();
     public DbSet<TimeSeries> TimeSeries => Set<TimeSeries>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -106,10 +107,12 @@ file sealed class PortfolioTableConfiguration : IEntityTypeConfiguration<Portfol
     }
 }
 
-file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<OrderMarket>
+file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<MarketOrder>
 {
-    public void Configure(EntityTypeBuilder<OrderMarket> builder)
+    public void Configure(EntityTypeBuilder<MarketOrder> builder)
     {
+        builder.Property(x => x.Symbol).HasMaxLength(24);
+        
         builder.OwnsOne(x => x.Price
         , a => a.Property(x => x.Value).HasColumnType("money"));
 
@@ -119,11 +122,25 @@ file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<Orde
         builder.OwnsOne(x => x.OpenQuantity
         , a => a.Property(x => x.Value).HasColumnType("decimal"));
 
+        builder.OwnsOne(x => x.FeeAmount
+        , a => a.Property(x => x.Value).HasColumnType("decimal"));
+
+        builder.OwnsOne(x => x.Cost
+        , a => a.Property(x => x.Value).HasColumnType("decimal"));
+
         builder.HasOne(x => x.Stock).WithMany(x => x.MarketOrders)
             .HasForeignKey(x => x.StockId);
 
         builder.HasOne(x => x.User).WithMany(x => x.MarketOrders)
             .HasForeignKey(x => x.UserId);
+    }
+}
+file sealed class FeeTableConfiguration : IEntityTypeConfiguration<Fee>
+{
+    public void Configure(EntityTypeBuilder<Fee> builder)
+    {
+        builder.Property(x => x.MakerFee).HasPrecision(18, 2);
+        builder.Property(x => x.TakerFee).HasPrecision(18, 2);
     }
 }
 

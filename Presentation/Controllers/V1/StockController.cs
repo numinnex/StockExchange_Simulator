@@ -1,6 +1,6 @@
 using Application.Common.Interfaces;
+using Application.Orders.Commands;
 using Application.Stocks.Queries;
-using Application.Trades.Commands;
 using Contracts.V1;
 using Contracts.V1.Requests;
 using MediatR;

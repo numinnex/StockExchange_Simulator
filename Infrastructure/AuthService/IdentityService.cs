@@ -177,6 +177,12 @@ public sealed class IdentityService :  IIdentityService
 
     }
 
+    public async Task<bool> UserExistsAsync(string userId, CancellationToken token)
+    {
+        var result = await _userManager.FindByIdAsync(userId);
+        return result is not null;
+    }
+
     private ClaimsPrincipal GetPrincipalFromToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();

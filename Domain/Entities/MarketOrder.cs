@@ -5,7 +5,7 @@ using Domain.ValueObjects;
 
 namespace Domain.Entities;
 
-public sealed class OrderMarket : Entity, IOrder
+public sealed class MarketOrder : Entity, IOrder
 {
     public required bool IsBuy { get; init; }
     public required Guid StockId { get; init; }
@@ -13,6 +13,8 @@ public sealed class OrderMarket : Entity, IOrder
     public required Quantity? OpenQuantity { get; set; }
     public required Amount? OrderAmount { get; set; }
     public required Price Price { get; init; }
+    public Amount FeeAmount { get; set; } = 0;
+    public Amount Cost { get; set; } = 0;
     public required DateTime Timestamp { get; init; }
     public required string UserId { get; init; }
     public ApplicationUser? User { get; init; }
@@ -20,4 +22,7 @@ public sealed class OrderMarket : Entity, IOrder
     public required TradeType Type { get; init; }
     public required TradeCondition TradeCondition { get; init; }
     public bool IsFilled => OpenQuantity == 0;
+    public required string Symbol { get; init; }
+    public required int FeeId { get; init; }
+    public Fee? Fee { get; init; }
 }

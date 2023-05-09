@@ -12,7 +12,7 @@ public sealed class Stock : Entity
     public required string Country { get; init; }
     public Change? Change { get; set; }
     public double? TrendingScore { get; set; }
-    public IEnumerable<OrderMarket>? MarketOrders { get; set; }
+    public IEnumerable<MarketOrder>? MarketOrders { get; set; }
     public int? TimeSeriesId { get; set; }
     public TimeSeries? TimeSeries { get; set; }
 }

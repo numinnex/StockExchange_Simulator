@@ -6,3 +6,4 @@ public enum TradeStatus
     Filled,
     Failed
 }
+

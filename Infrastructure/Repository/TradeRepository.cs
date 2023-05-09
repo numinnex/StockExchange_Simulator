@@ -15,7 +15,7 @@ public sealed class TradeRepository : ITradeRepository
     }
 
     //TODO -- Add transaction
-    public Task AddMarketOrderAsync(OrderMarket order, CancellationToken cancellationToken)
+    public Task AddMarketOrderAsync(MarketOrder order, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
