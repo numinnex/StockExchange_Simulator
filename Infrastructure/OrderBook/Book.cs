@@ -49,7 +49,6 @@ public class Book : IBook
             try
             {
                 AddMarketOrder(marketOrder);
-                System.Console.WriteLine("Order added in Quantity");
             }
             catch
             {

@@ -6,8 +6,6 @@ namespace Application_Tests.Creation;
 
 public sealed class ResultCreation
 {
-
-
     [Fact]
     public void ShouldCreateEmptyErrorsArrayWhenSuccessful()
     {

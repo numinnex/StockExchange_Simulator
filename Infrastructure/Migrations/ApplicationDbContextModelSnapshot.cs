@@ -56,7 +56,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("RefreshTokens", "db_stock");
                 });
 
-            modelBuilder.Entity("Domain.Entities.OrderMarket", b =>
+            modelBuilder.Entity("Domain.Entities.MarketOrder", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -224,6 +224,56 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TimeSeries", "db_stock");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TradeDetails", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TradeDetails", "db_stock");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TradeFootprint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ProcessedOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ProcessedOrderIsBuy")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProcessedOrderUserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("RestingOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RestingOrderUserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("TradeDetailsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TradeDetailsId");
+
+                    b.ToTable("TradeFootprints", "db_stock");
                 });
 
             modelBuilder.Entity("Domain.Identity.ApplicationUser", b =>
@@ -456,7 +506,7 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.OrderMarket", b =>
+            modelBuilder.Entity("Domain.Entities.MarketOrder", b =>
                 {
                     b.HasOne("Fee", "Fee")
                         .WithMany()
@@ -478,82 +528,82 @@ namespace Infrastructure.Migrations
 
                     b.OwnsOne("Amount", "Cost", b1 =>
                         {
-                            b1.Property<Guid>("OrderMarketId")
+                            b1.Property<Guid>("MarketOrderId")
                                 .HasColumnType("uniqueidentifier");
 
                             b1.Property<decimal>("Value")
                                 .HasColumnType("decimal");
 
-                            b1.HasKey("OrderMarketId");
+                            b1.HasKey("MarketOrderId");
 
                             b1.ToTable("MarketTrades", "db_stock");
 
                             b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
+                                .HasForeignKey("MarketOrderId");
                         });
 
                     b.OwnsOne("Amount", "FeeAmount", b1 =>
                         {
-                            b1.Property<Guid>("OrderMarketId")
+                            b1.Property<Guid>("MarketOrderId")
                                 .HasColumnType("uniqueidentifier");
 
                             b1.Property<decimal>("Value")
                                 .HasColumnType("decimal");
 
-                            b1.HasKey("OrderMarketId");
+                            b1.HasKey("MarketOrderId");
 
                             b1.ToTable("MarketTrades", "db_stock");
 
                             b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
-                        });
-
-                    b.OwnsOne("Amount", "OrderAmount", b1 =>
-                        {
-                            b1.Property<Guid>("OrderMarketId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Value")
-                                .HasColumnType("money");
-
-                            b1.HasKey("OrderMarketId");
-
-                            b1.ToTable("MarketTrades", "db_stock");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
-                        });
-
-                    b.OwnsOne("Domain.ValueObjects.Price", "Price", b1 =>
-                        {
-                            b1.Property<Guid>("OrderMarketId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Value")
-                                .HasColumnType("money");
-
-                            b1.HasKey("OrderMarketId");
-
-                            b1.ToTable("MarketTrades", "db_stock");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
+                                .HasForeignKey("MarketOrderId");
                         });
 
                     b.OwnsOne("Quantity", "OpenQuantity", b1 =>
                         {
-                            b1.Property<Guid>("OrderMarketId")
+                            b1.Property<Guid>("MarketOrderId")
                                 .HasColumnType("uniqueidentifier");
 
                             b1.Property<decimal>("Value")
                                 .HasColumnType("decimal");
 
-                            b1.HasKey("OrderMarketId");
+                            b1.HasKey("MarketOrderId");
 
                             b1.ToTable("MarketTrades", "db_stock");
 
                             b1.WithOwner()
-                                .HasForeignKey("OrderMarketId");
+                                .HasForeignKey("MarketOrderId");
+                        });
+
+                    b.OwnsOne("Amount", "OrderAmount", b1 =>
+                        {
+                            b1.Property<Guid>("MarketOrderId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("MarketOrderId");
+
+                            b1.ToTable("MarketTrades", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MarketOrderId");
+                        });
+
+                    b.OwnsOne("Domain.ValueObjects.Price", "Price", b1 =>
+                        {
+                            b1.Property<Guid>("MarketOrderId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("MarketOrderId");
+
+                            b1.ToTable("MarketTrades", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MarketOrderId");
                         });
 
                     b.Navigation("Cost")
@@ -677,6 +727,130 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("TimeSeriesId");
 
                     b.Navigation("TimeSeries");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TradeDetails", b =>
+                {
+                    b.OwnsOne("Amount", "AskFee", b1 =>
+                        {
+                            b1.Property<int>("TradeDetailsId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("TradeDetailsId");
+
+                            b1.ToTable("TradeDetails", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeDetailsId");
+                        });
+
+                    b.OwnsOne("Amount", "BidCost", b1 =>
+                        {
+                            b1.Property<int>("TradeDetailsId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("TradeDetailsId");
+
+                            b1.ToTable("TradeDetails", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeDetailsId");
+                        });
+
+                    b.OwnsOne("Amount", "BidFee", b1 =>
+                        {
+                            b1.Property<int>("TradeDetailsId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("TradeDetailsId");
+
+                            b1.ToTable("TradeDetails", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeDetailsId");
+                        });
+
+                    b.OwnsOne("Quantity", "RemainingQuantity", b1 =>
+                        {
+                            b1.Property<int>("TradeDetailsId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("decimal");
+
+                            b1.HasKey("TradeDetailsId");
+
+                            b1.ToTable("TradeDetails", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeDetailsId");
+                        });
+
+                    b.Navigation("AskFee");
+
+                    b.Navigation("BidCost");
+
+                    b.Navigation("BidFee");
+
+                    b.Navigation("RemainingQuantity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TradeFootprint", b =>
+                {
+                    b.HasOne("Domain.Entities.TradeDetails", "TradeDetails")
+                        .WithMany()
+                        .HasForeignKey("TradeDetailsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Domain.ValueObjects.Price", "MatchPrice", b1 =>
+                        {
+                            b1.Property<int>("TradeFootprintId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("money");
+
+                            b1.HasKey("TradeFootprintId");
+
+                            b1.ToTable("TradeFootprints", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeFootprintId");
+                        });
+
+                    b.OwnsOne("Quantity", "Quantity", b1 =>
+                        {
+                            b1.Property<int>("TradeFootprintId")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Value")
+                                .HasColumnType("decimal");
+
+                            b1.HasKey("TradeFootprintId");
+
+                            b1.ToTable("TradeFootprints", "db_stock");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradeFootprintId");
+                        });
+
+                    b.Navigation("MatchPrice")
+                        .IsRequired();
+
+                    b.Navigation("Quantity")
+                        .IsRequired();
+
+                    b.Navigation("TradeDetails");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

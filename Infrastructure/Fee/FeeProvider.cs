@@ -1,3 +1,4 @@
+using Domain.Entities;
 using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,4 +14,5 @@ public class FeeProvider : IFeeProvider
     {
         return await _ctx.Fees.FindAsync(feeId);
     }
+
 }

@@ -9,5 +9,4 @@ public interface IStockRepository : IRepository<Stock>
     void UpdateAsync(Stock stock );
     Task AddRangeAsync(IEnumerable<Stock> entities, CancellationToken token);
     Task SaveChangesAsync(CancellationToken token);
-    Task<bool> ExistAsync(string id, CancellationToken token);
 }

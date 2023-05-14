@@ -1,6 +1,7 @@
+using System.Collections;
 using Domain.ValueObjects;
 
-public class QuantityTrackingPriceLevel : IPriceLevel
+public class QuantityTrackingPriceLevel : IPriceLevel, IEnumerable<IOrder>
 {
     private Price _price;
     private Quantity _quantity;
@@ -27,7 +28,6 @@ public class QuantityTrackingPriceLevel : IPriceLevel
     public void AddOrder(IOrder order)
     {
         _quantity += order.OpenQuantity!;
-        System.Console.WriteLine("Order added in pricelevel");
         _orders.Add(order);
     }
 
@@ -55,5 +55,15 @@ public class QuantityTrackingPriceLevel : IPriceLevel
     public void SetPrice(Price price)
     {
         _price = price;
+    }
+
+    public IEnumerator<IOrder> GetEnumerator()
+    {
+        return ((IEnumerable<IOrder>)_orders).GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

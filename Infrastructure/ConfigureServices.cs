@@ -8,6 +8,8 @@ using Infrastructure.Database.Interceptors;
 using Infrastructure.DateTimeService;
 using Infrastructure.Options;
 using Infrastructure.Repository;
+using Infrastructure.StockService;
+using Infrastructure.TradeService;
 using Infrastructure.TwelveDataApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -34,10 +36,16 @@ public static class ConfigureServices
         
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IFeeRepository, FeeRepository>();
+        
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<ITradeListener, TradeListener>();
         services.AddScoped<IFeeProvider, FeeProvider>();
         
         services.AddTransient<TwelveDataHeaderMiddleware>();
+
+        services.AddScoped<IStockUtils, StockUtils>();
 
         services.ConfigureOptions<TwelveDataApiOptionSetup>();
         services.ConfigureOptions<JwtSettingsOptionsSetup>();

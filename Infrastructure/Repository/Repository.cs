@@ -38,8 +38,7 @@ public class Repository<T> : IRepository<T> where T : class
     public void Remove(T entity )
     {
         _dbSet.Remove(entity);
-    }
-     
+    } 
     public void RemoveRange(IEnumerable<T> entities )
     {
         _dbSet.RemoveRange(entities);

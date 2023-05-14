@@ -1,5 +1,6 @@
 using Application;
 using Infrastructure;
+using Infrastructure.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 
@@ -46,7 +47,6 @@ builder.Services.AddSwaggerGen(x =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -54,7 +54,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -64,6 +63,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
     if (!await roleManager.RoleExistsAsync("Admin"))
     {
@@ -75,6 +75,18 @@ using (var scope = app.Services.CreateScope())
     {
         var userRole = new IdentityRole("User"); 
         await roleManager.CreateAsync(userRole);
+    }
+
+    var val = await dbContext.Fees.FindAsync(1);
+    if (val is null)
+    {
+        await dbContext.Fees.AddAsync(new Fee
+        {
+            Id = 1,
+            MakerFee = 0.1m,
+            TakerFee = 0.5m
+        });
+        await dbContext.SaveChangesAsync();
     }
 }
 

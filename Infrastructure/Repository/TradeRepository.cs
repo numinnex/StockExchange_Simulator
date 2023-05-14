@@ -15,9 +15,9 @@ public sealed class TradeRepository : ITradeRepository
     }
 
     //TODO -- Add transaction
-    public Task AddMarketOrderAsync(MarketOrder order, CancellationToken cancellationToken)
+    public async Task AddMarketOrderAsync(MarketOrder order, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        await _ctx.MarketTrades.AddAsync(order, cancellationToken);
     }
 
 
@@ -40,5 +40,10 @@ public sealed class TradeRepository : ITradeRepository
             }
 
         } while (saveFailed);
+    }
+
+    public async Task AddTradeFootprintAsync(TradeFootprint tradeFootprint, CancellationToken token)
+    {
+        await _ctx.TradeFootprints.AddAsync(tradeFootprint, token);
     }
 }

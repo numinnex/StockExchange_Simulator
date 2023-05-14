@@ -14,6 +14,6 @@ public interface IOrder
     public DateTime Timestamp { get; init; }
     public string UserId { get; init; }
     public string Symbol { get; init; }
-    public TradeType Type { get; init; }
-    public TradeCondition TradeCondition { get; init; }
+    public TradeType Type { get; set; }
+    public TradeCondition TradeCondition { get; set; }
 }

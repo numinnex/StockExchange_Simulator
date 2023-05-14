@@ -4,31 +4,31 @@ using FluentValidation;
 
 namespace Application.Orders.Commands;
 
-public sealed class MarketOrderCommandValidation : AbstractValidator<MarketOrderCommand>
+public sealed class MarketOrderQuantityCommandValidation : AbstractValidator<MarketOrderQuantityCommand>
 {
-    private readonly IStockRepository _stockRepository;
+    private readonly IStockUtils _stockUtils;
     private readonly IIdentityService _identityService;
 
-    public MarketOrderCommandValidation(IStockRepository stockRepository, IIdentityService identityService)
+    public MarketOrderQuantityCommandValidation(IStockUtils stockUtils, IIdentityService identityService)
     {
-        _stockRepository = stockRepository;
+        _stockUtils = stockUtils;
         _identityService = identityService;
-    }
-    public MarketOrderCommandValidation()
-    {
+
         
-        RuleFor(x => x.UserId).NotEmpty().NotNull().Must(x => Guid.TryParse(x, out var _))
+        RuleFor(x => x.UserId).Cascade(CascadeMode.Stop).NotEmpty().NotNull().Must(x => Guid.TryParse(x, out var _))
             .WithMessage("Error not valid guid")
             .MustAsync(UserExists).WithMessage("User not found");
-        RuleFor(x => x.StockId).NotEmpty().NotNull().Must(x => Guid.TryParse(x, out var _))
+
+        RuleFor(x => x.StockId).Cascade(CascadeMode.Stop).NotEmpty().NotNull().Must(x => Guid.TryParse(x, out var _))
             .WithMessage("Error not valid guid")
             .MustAsync(StockExistInDatabase).WithMessage("Stock not found");
+        
         RuleFor(x => x.Quantity).GreaterThan(0);
     }
 
     private async Task<bool> StockExistInDatabase(string stockId, CancellationToken cancellationToken)
     {
-        return await _stockRepository.ExistAsync(stockId, cancellationToken);
+        return await _stockUtils.ExistsAsync(stockId, cancellationToken);
     }
     private async Task<bool> UserExists(string userId, CancellationToken token)
     {

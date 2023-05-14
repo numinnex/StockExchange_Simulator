@@ -26,7 +26,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StockSnapshot> StockSnapshots => Set<StockSnapshot>();
     public DbSet<TimeSeries> TimeSeries => Set<TimeSeries>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-
+    public DbSet<TradeFootprint> TradeFootprints => Set<TradeFootprint>();
+    public DbSet<TradeDetails> TradeDetails => Set<TradeDetails>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -40,6 +41,36 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         //TODO - Uncomment after fixing auditableEntitySaveChangesInterceptor
         //optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor);
         base.OnConfiguring(optionsBuilder);
+    }
+}
+file sealed class TradeFootprintTableConfiguration : IEntityTypeConfiguration<TradeFootprint>{
+    public void Configure(EntityTypeBuilder<TradeFootprint> builder)
+    {
+        builder.OwnsOne(x => x.Quantity, a => a.Property(
+                x => x.Value).HasColumnType("decimal"));
+        builder.OwnsOne(x => x.MatchPrice, a => a.Property(
+                x => x.Value).HasColumnType("money"));
+
+        builder.Property(x => x.ProcessedOrderUserId)
+            .HasMaxLength(100);
+        builder.Property(x => x.RestingOrderUserId)
+            .HasMaxLength(100);
+        
+    }
+}
+
+file sealed class TradeDetailsTableConfiguraion : IEntityTypeConfiguration<TradeDetails>
+{
+    public void Configure(EntityTypeBuilder<TradeDetails> builder)
+    {
+        builder.OwnsOne(x => x.AskFee, a => a.Property(
+                x => x.Value).HasColumnType("money"));
+        builder.OwnsOne(x => x.BidFee, a => a.Property(
+                x => x.Value).HasColumnType("money"));
+        builder.OwnsOne(x => x.BidCost, a => a.Property(
+                x => x.Value).HasColumnType("money"));
+        builder.OwnsOne(x => x.RemainingQuantity, a => a.Property(
+                x => x.Value).HasColumnType("decimal"));
     }
 }
 file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>

@@ -18,7 +18,6 @@ public class Side<T> where T : class, IPriceLevel, new()
     public void AddOrder(IOrder order, Price price)
     {
         var priceLevel = GetOrAddPriceLevel(price);
-        System.Console.WriteLine("Order added in Side");
         priceLevel.AddOrder(order);
     }
     public bool RemoveOrder(IOrder order, Price price)
@@ -84,7 +83,6 @@ public class Side<T> where T : class, IPriceLevel, new()
             {
                 _bestPriceLevel = priceLevel;
             }
-            System.Console.WriteLine("found price level");
         }
         return priceLevel;
     }
