@@ -10,7 +10,7 @@ public class FeeProvider : IFeeProvider
     {
         _ctx = ctx;
     }
-    public async Task<Fee?> GetFee(int feeId)
+    public async Task<Fee?> GetFeeAsync(int feeId)
     {
         return await _ctx.Fees.FindAsync(feeId);
     }

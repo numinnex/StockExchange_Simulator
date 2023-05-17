@@ -11,7 +11,7 @@ public interface IOrder
     public Quantity? OpenQuantity { get; set; }
     public Amount? OrderAmount { get; set; }
     public int FeeId { get; init; }
-    public DateTime Timestamp { get; init; }
+    public DateTimeOffset Timestamp { get; init; }
     public string UserId { get; init; }
     public string Symbol { get; init; }
     public TradeType Type { get; set; }

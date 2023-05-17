@@ -532,7 +532,7 @@ namespace Infrastructure.Migrations
                                 .HasColumnType("uniqueidentifier");
 
                             b1.Property<decimal>("Value")
-                                .HasColumnType("decimal");
+                                .HasColumnType("money");
 
                             b1.HasKey("MarketOrderId");
 
@@ -548,7 +548,7 @@ namespace Infrastructure.Migrations
                                 .HasColumnType("uniqueidentifier");
 
                             b1.Property<decimal>("Value")
-                                .HasColumnType("decimal");
+                                .HasColumnType("money");
 
                             b1.HasKey("MarketOrderId");
 
@@ -564,7 +564,7 @@ namespace Infrastructure.Migrations
                                 .HasColumnType("uniqueidentifier");
 
                             b1.Property<decimal>("Value")
-                                .HasColumnType("decimal");
+                                .HasColumnType("money");
 
                             b1.HasKey("MarketOrderId");
 

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repository;
+using Application.Common.Models;
 using Domain.Entities;
 using Domain.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,6 @@ public class MatchingEngine : IMatchingEngine
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ConcurrentDictionary<string, IBook> _books;
-
     private readonly Quantity _stepSize;
     
     public MatchingEngine( 
@@ -20,48 +20,63 @@ public class MatchingEngine : IMatchingEngine
         //TODO - create options pattern for matchingengine settings (move to appsettings.json) 
         _stepSize = new (0.0000_0001m);
     }
-    public async Task AddOrder(IOrder order, CancellationToken token)
+    public async Task<OrderCreationResult> AddOrder(IOrder order, CancellationToken token)
     {
         if (order is MarketOrder marketOrder)
         {
             if (marketOrder.OpenQuantity is not null)
             {
-                await HandleMarketOrderWithOpenQuantity(marketOrder , token);
+                return await HandleMarketOrderWithOpenQuantity(marketOrder , token);
             }
             if (marketOrder.OrderAmount is not null)
             {
-                await HandleMarketOrderWithAmount(marketOrder, token);
+                return await HandleMarketOrderWithAmount(marketOrder, token);
             }
         }
+        //get rid of this later
+        return new OrderCreationResult
+        {
+            IsFilled = false,
+            IsMatched = false
+        };
     }
-    private async Task HandleMarketOrderWithAmount(MarketOrder order, CancellationToken token)
+    private async Task<OrderCreationResult> HandleMarketOrderWithAmount(MarketOrder order, CancellationToken token)
     {
         var book = GetOrCreateBook(order.Symbol);
         var quantityByOrderAmount = GetQuantityByOrderAmount(order.OrderAmount!, book);
         if (quantityByOrderAmount is not null)
         {
             order.OpenQuantity = quantityByOrderAmount;
-            var matched = await MatchWithOpenOrders(order, book, token);
-            if (!matched)
+            var matchingResult = await MatchWithOpenOrders(order, book, token);
+            return new OrderCreationResult
             {
-                var result = book.AddOrder(order, order.Price);
-            }
+                IsFilled = matchingResult.IsFilled,
+                IsMatched = matchingResult.IsMatched,
+                Cost = matchingResult.Cost,
+                AskLevelsCount = book.AskLevelsCount,
+                BidLevelsCount = book.BidLevelsCount
+            };
         }
+
+        return new OrderCreationResult
+        {
+            IsFilled = false,
+            IsMatched = false,
+        };
     }
-    private async Task HandleMarketOrderWithOpenQuantity(MarketOrder order, CancellationToken token)
+    private async Task<OrderCreationResult> HandleMarketOrderWithOpenQuantity(MarketOrder order, CancellationToken token)
     {
         var book = GetOrCreateBook(order.Symbol);
-        var matched = await MatchWithOpenOrders(order, book, token);
-        if (!matched )
+        var matchingResult = await MatchWithOpenOrders(order, book, token);
+        return new OrderCreationResult
         {
-            var result = book.AddOrder(order, order.Price);
-            if (result)
-            {
-                
-            }
-        }
+            IsFilled = matchingResult.IsFilled,
+            IsMatched = matchingResult.IsMatched,
+            Cost = matchingResult.Cost,
+            AskLevelsCount = book.AskLevelsCount,
+            BidLevelsCount = book.BidLevelsCount
+        };
     }
-
     private void CreateBookWithRetries(string symbol)
     {
         const int maxRetires = 5;
@@ -71,12 +86,9 @@ public class MatchingEngine : IMatchingEngine
             if (_books.TryAdd(symbol, new Book()))
             {
                 break;        
-            }
-            else
-            {
-                retryCount++;
-                Thread.Sleep(500);
-            }
+                }
+            retryCount++;
+            Thread.Sleep(500);
         }
     }
     private IBook GetOrCreateBook(string symbol)
@@ -88,26 +100,34 @@ public class MatchingEngine : IMatchingEngine
 
         return _books[symbol];
     }
-    //TODO - change the return type from bool to something more elaborative 
-    private async Task<bool> MatchWithOpenOrders(IOrder incommingOrder, IBook book, CancellationToken token)
+    private async Task<MatchOrderResult> MatchWithOpenOrders(IOrder incommingOrder, IBook book, CancellationToken token)
     {
+        int iterCount = 0;
         while (true)
         {
             if (incommingOrder is MarketOrder incommingMarketOrder)
             {
-                using var scope = _serviceScopeFactory.CreateScope();
+                using var scope =_serviceScopeFactory.CreateScope();
                 var orderRepository = scope.ServiceProvider.GetService<IOrderRepository>();
                 var tradeListener = scope.ServiceProvider.GetService<ITradeListener>();
                 
-                var restingMarketOrder = book.GetBestOffer(!incommingMarketOrder.IsBuy) as MarketOrder;
+                var restingMarketOrder =
+                    book.GetBestOffer(!incommingMarketOrder.IsBuy, incommingMarketOrder.UserId) as MarketOrder;
                 if (restingMarketOrder is null)
                 {
+                    AddToOrderBook(book, incommingMarketOrder);
                     await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
-                    return false;
+                    return new MatchOrderResult
+                    {
+                        IsFilled = false,
+                        IsMatched = iterCount > 0,
+                        Cost = incommingMarketOrder.Cost
+                    };
                 }
                 if ((incommingMarketOrder.IsBuy && restingMarketOrder.Price <= incommingMarketOrder.Price)
                     || (!incommingMarketOrder.IsBuy && restingMarketOrder.Price >= incommingMarketOrder.Price))
                 {
+                    iterCount++;
                     var matchPrice = restingMarketOrder.Price;
                     Quantity maxQuantity;
 
@@ -125,8 +145,8 @@ public class MatchingEngine : IMatchingEngine
                         
                         var feeProvider = scope.ServiceProvider.GetService<IFeeProvider>();
                         
-                        var incommingFee = await feeProvider!.GetFee(incommingOrder.FeeId);
-                        var restingFee = await feeProvider.GetFee(restingMarketOrder.FeeId);
+                        var incommingFee = await feeProvider!.GetFeeAsync(incommingOrder.FeeId);
+                        var restingFee = await feeProvider.GetFeeAsync(restingMarketOrder.FeeId);
                         if(restingFee is not null)
                             restingMarketOrder.FeeAmount += Math.Round((cost * restingFee.MakerFee) / 100, 4);
                         if(incommingFee is not null)
@@ -145,20 +165,36 @@ public class MatchingEngine : IMatchingEngine
                             restingMarketOrder, isRestingOrderFilled, isIncommingOrderFilled);
                         await tradeListener!.OnTradeAsync(tradeFootprint, token);
                         
+                        if (isIncommingOrderFilled)
+                        {
+                            await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
+                            return new MatchOrderResult
+                            {
+                                IsFilled = true,
+                                IsMatched = true,
+                                Cost = incommingMarketOrder.Cost
+                            };
+                        }
                     }
                 }
                 else
                 {
+                    AddToOrderBook(book ,incommingMarketOrder );
                     await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
-                    return false;
-                }
-                if (incommingMarketOrder.IsFilled)
-                {
-                    await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
-                    return true;
+                    return new MatchOrderResult
+                    {
+                        IsFilled = false,
+                        IsMatched = iterCount > 0,
+                        Cost = incommingMarketOrder.Cost
+                    };
                 }
             }
         }
+    }
+
+    private void AddToOrderBook(IBook book, MarketOrder incommingMarketOrder)
+    {
+        book.AddOrder(incommingMarketOrder, incommingMarketOrder.Price);
     }
 
     private TradeFootprint CreateTradeFootprint(
@@ -233,7 +269,6 @@ public class MatchingEngine : IMatchingEngine
         var dustRemaining = false;
         Quantity quantity = 0;
         decimal q;
-
         using var enumerator = book.AskSide.GetEnumerator();
         while (enumerator.MoveNext())
         {
@@ -257,7 +292,6 @@ public class MatchingEngine : IMatchingEngine
                 }
                 else
                 {
-                    dustRemaining = true;
                     q = (orderAmount / marketOrder.Price);
                     q -= (q % _stepSize);
                     if (q > 0)
@@ -273,7 +307,6 @@ public class MatchingEngine : IMatchingEngine
 
             }
         }
-
         breakOutside:
         if (quantity > 0)
             return quantity;

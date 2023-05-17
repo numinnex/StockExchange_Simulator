@@ -151,14 +151,14 @@ file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<Mark
         , a => a.Property(x => x.Value).HasColumnType("money"));
 
         builder.OwnsOne(x => x.OpenQuantity
-        , a => a.Property(x => x.Value).HasColumnType("decimal"));
+        , a => a.Property(x => x.Value).HasColumnType("money"));
 
         builder.OwnsOne(x => x.FeeAmount
-        , a => a.Property(x => x.Value).HasColumnType("decimal"));
+        , a => a.Property(x => x.Value).HasColumnType("money"));
 
         builder.OwnsOne(x => x.Cost
-        , a => a.Property(x => x.Value).HasColumnType("decimal"));
-
+        , a => a.Property(x => x.Value).HasColumnType("money"));
+        
         builder.HasOne(x => x.Stock).WithMany(x => x.MarketOrders)
             .HasForeignKey(x => x.StockId);
 

@@ -3,7 +3,7 @@ using NetArchTest.Rules;
 
 namespace Architecture_Test;
 
-public sealed class ArchitectureTests
+public sealed class ArchitectureTests 
 {
     private const string DomainNamespace = "Domain";
     private const string ApplicationNamespace = "Application";

@@ -1,4 +1,4 @@
 public interface IFeeProvider
 {
-    Task<Fee?> GetFee(int feeId);
+    Task<Fee?> GetFeeAsync(int feeId);
 }

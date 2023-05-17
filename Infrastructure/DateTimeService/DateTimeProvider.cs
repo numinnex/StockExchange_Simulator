@@ -4,5 +4,5 @@ namespace Infrastructure.DateTimeService;
 
 public sealed class DateTimeProvider : IDateTimeProvider
 {
-    public DateTime Now => DateTime.UtcNow;
+    public DateTimeOffset Now => DateTimeOffset.UtcNow;
 }

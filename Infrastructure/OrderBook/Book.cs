@@ -8,8 +8,10 @@ public class Book : IBook
     private long _sequence;
     public IEnumerable<QuantityTrackingPriceLevel> BidSide => _bids.PriceLevels;
     public IEnumerable<QuantityTrackingPriceLevel> AskSide => _asks.PriceLevels;
-    internal int AskPriceLevelCount => _asks.PriceLevelCount;
-    internal int BidPriceLevelCount => _bids.PriceLevelCount;
+    public int BidLevelsCount => _bids.PriceLevelCount;
+    public int AskLevelsCount => _asks.PriceLevelCount; 
+    public int AskPriceLevelCount => _asks.PriceLevelCount;
+    public int BidPriceLevelCount => _bids.PriceLevelCount;
 
     public Book()
     {
@@ -58,9 +60,11 @@ public class Book : IBook
         }
         return true;
     }
-    public IOrder? GetBestOffer(bool isBuy)
+    public IOrder? GetBestOffer(bool isBuy, string userId)
     {
-        return isBuy ? _bids.BestPriceLevel?.First : _asks.BestPriceLevel?.First;
+        return isBuy
+            ? _bids.BestPriceLevel?.FirstOrDefault(x => x.UserId != userId)
+            : _asks.BestPriceLevel?.FirstOrDefault(x => x.UserId != userId);
     }
     private void AddMarketOrder(MarketOrder order)
     {

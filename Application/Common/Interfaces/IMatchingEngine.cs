@@ -1,5 +1,7 @@
+using Application.Common.Models;
+
 public interface IMatchingEngine
 {
-    Task AddOrder(IOrder order, CancellationToken token);
+    Task<OrderCreationResult> AddOrder(IOrder order, CancellationToken token);
     void CancelOrder(Guid orderId);
 }

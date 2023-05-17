@@ -33,6 +33,7 @@ public sealed class MarketOrderQuantityHandler : IRequestHandler<MarketOrderQuan
         
         var order = new MarketOrder()
         {
+            Id = new Guid(),
             IsBuy = request.IsBuy,
             StockId = Guid.Parse(request.StockId),
             UserId = request.UserId,

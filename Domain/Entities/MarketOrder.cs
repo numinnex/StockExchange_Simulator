@@ -15,7 +15,7 @@ public sealed class MarketOrder : Entity, IOrder
     public required Price Price { get; init; }
     public Amount FeeAmount { get; set; } = 0;
     public Amount Cost { get; set; } = 0;
-    public required DateTime Timestamp { get; init; }
+    public required DateTimeOffset Timestamp { get; init; }
     public required string UserId { get; init; }
     public ApplicationUser? User { get; init; }
     public TradeStatus Status { get; private set; } = TradeStatus.InQueue;

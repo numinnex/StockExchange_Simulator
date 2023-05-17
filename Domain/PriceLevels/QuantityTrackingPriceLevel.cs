@@ -27,7 +27,10 @@ public class QuantityTrackingPriceLevel : IPriceLevel, IEnumerable<IOrder>
 
     public void AddOrder(IOrder order)
     {
-        _quantity += order.OpenQuantity!;
+        if (order.OpenQuantity is not null)
+        {
+            _quantity += order.OpenQuantity;
+        }
         _orders.Add(order);
     }
 
