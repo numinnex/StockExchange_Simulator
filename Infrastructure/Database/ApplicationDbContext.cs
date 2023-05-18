@@ -22,7 +22,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Stock> Stocks => Set<Stock>();
     public DbSet<Fee> Fees => Set<Fee>();
     public DbSet<Portfolio> Portfolios => Set<Portfolio>();
-    public DbSet<MarketOrder> MarketTrades => Set<MarketOrder>();
+    public DbSet<MarketOrder> MarketOrders => Set<MarketOrder>();
+    public DbSet<StopOrder> StopOrders => Set<StopOrder>();
     public DbSet<StockSnapshot> StockSnapshots => Set<StockSnapshot>();
     public DbSet<TimeSeries> TimeSeries => Set<TimeSeries>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -43,6 +44,32 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         base.OnConfiguring(optionsBuilder);
     }
 }
+
+file sealed class StopOrderTableConfiguration : IEntityTypeConfiguration<StopOrder>
+{
+    public void Configure(EntityTypeBuilder<StopOrder> builder)
+    {
+        builder.Property(x => x.Symbol).HasMaxLength(24);
+        
+        builder.OwnsOne(x => x.StopPrice, a => a.Property(
+                x => x.Value).HasColumnType("money"));
+        builder.OwnsOne(x => x.OpenQuantity
+            , a => a.Property(x => x.Value).HasColumnType("money"));
+        builder.OwnsOne(x => x.FeeAmount
+            , a => a.Property(x => x.Value).HasColumnType("money"));
+        builder.OwnsOne(x => x.Cost
+            , a => a.Property(x => x.Value).HasColumnType("money"));
+        
+        builder.HasOne(x => x.Stock).WithMany(x => x.StopOrders)
+            .HasForeignKey(x => x.StockId);
+
+        builder.HasOne(x => x.User).WithMany(x => x.StopOrders)
+            .HasForeignKey(x => x.UserId);
+        
+        
+    }
+}
+
 file sealed class TradeFootprintTableConfiguration : IEntityTypeConfiguration<TradeFootprint>{
     public void Configure(EntityTypeBuilder<TradeFootprint> builder)
     {

@@ -13,6 +13,7 @@ public sealed class Stock : Entity
     public Change? Change { get; set; }
     public double? TrendingScore { get; set; }
     public IEnumerable<MarketOrder>? MarketOrders { get; set; }
+    public IEnumerable<StopOrder>? StopOrders { get; set; }
     public int? TimeSeriesId { get; set; }
     public TimeSeries? TimeSeries { get; set; }
 }

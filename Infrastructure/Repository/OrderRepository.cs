@@ -10,17 +10,24 @@ public sealed class OrderRepository : IOrderRepository
 {
     private readonly ApplicationDbContext _ctx;
     private readonly DbSet<MarketOrder> _marketOrder;
+    private readonly DbSet<StopOrder> _stopOrder;
 
     public OrderRepository(ApplicationDbContext ctx)
     {
         _ctx = ctx;
-        _marketOrder = _ctx.MarketTrades;
+        _marketOrder = _ctx.MarketOrders;
+        _stopOrder = _ctx.StopOrders; 
     }
     public async Task AddAsync(IOrder order, CancellationToken token)
     {
         if (order is MarketOrder marketOrder)
         {
            await _marketOrder.AddAsync(marketOrder, token);
+        }
+
+        if (order is StopOrder stopOrder)
+        {
+            await _stopOrder.AddAsync(stopOrder, token);
         }
     }
 
@@ -44,6 +51,22 @@ public sealed class OrderRepository : IOrderRepository
         if (order is MarketOrder marketOrder)
         {
             _marketOrder.Update(marketOrder);
+        }
+        if (order is StopOrder stopOrder)
+        {
+            _stopOrder.Update(stopOrder);
+        }
+    }
+
+    public void Remove(IOrder order)
+    {
+        if (order is MarketOrder marketOrder)
+        {
+            _marketOrder.Remove(marketOrder);
+        }
+        if (order is StopOrder stopOrder)
+        {
+            _stopOrder.Remove(stopOrder);
         }
     }
 

@@ -7,4 +7,6 @@ public sealed class OrderCreationResult
     public decimal? Cost { get; init; }    
     public int BidLevelsCount { get; init; }
     public int AskLevelsCount { get; init; }
+    public int BidsCount { get; init; }
+    public int AsksCount { get; init; }
 }

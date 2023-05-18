@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Domain.ValueObjects;
 
 public class Side<T> where T : class, IPriceLevel, new()
@@ -60,6 +61,35 @@ public class Side<T> where T : class, IPriceLevel, new()
         }
 
         return cummulativeOrderAmount >= orderAmount;
+    }
+
+    public IReadOnlyList<T> RemovePriceLevelsTill(Price price)
+    {
+        if (_bestPriceLevel is not null && _priceComparer.Compare(_bestPriceLevel.Price, price) < 0)
+        {
+            List<T> priceLevels = new List<T>();
+            foreach (var priceLevel in _priceLevels)
+            {
+                if (_priceComparer.Compare(price, priceLevel.Price) <= 0)
+                {
+                    priceLevels.Add(priceLevel);    
+                }
+                else
+                {
+                    _bestPriceLevel = priceLevel;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < priceLevels.Count; i++)
+            {
+                _priceLevels.Remove(priceLevels[i]);
+            }
+
+            return priceLevels.AsReadOnly();
+        }
+
+        return Enumerable.Empty<T>().ToList();
     }
 
     private void RemovePriceLevelIfEmpty(T priceLevel)

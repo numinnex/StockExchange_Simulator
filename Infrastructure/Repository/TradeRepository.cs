@@ -17,7 +17,7 @@ public sealed class TradeRepository : ITradeRepository
     //TODO -- Add transaction
     public async Task AddMarketOrderAsync(MarketOrder order, CancellationToken cancellationToken)
     {
-        await _ctx.MarketTrades.AddAsync(order, cancellationToken);
+        await _ctx.MarketOrders.AddAsync(order, cancellationToken);
     }
 
 

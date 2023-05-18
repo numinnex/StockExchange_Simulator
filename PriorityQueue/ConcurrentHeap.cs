@@ -1,11 +1,15 @@
+using System.Collections;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace ConcurrentHeap;
-public class ConcurrentHeap<T>
+public class ConcurrentHeap<T> : IEnumerable<T>
 {
     private readonly object _sync = new object();
 
     private List<T> _heap;
     private readonly Func<T, T, bool> _compare;
-    private int Count
+    public int Count
     {
         get
         {
@@ -109,4 +113,20 @@ public class ConcurrentHeap<T>
     {
         return 2 * i + 2;
     }
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        lock (_sync)
+        {
+            foreach (var item in _heap)
+            {
+                yield return item;
+            }
+        }
+    }
+
+     IEnumerator IEnumerable.GetEnumerator()
+     {
+         return GetEnumerator();
+     }
 }

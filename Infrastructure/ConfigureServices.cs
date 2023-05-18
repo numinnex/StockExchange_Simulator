@@ -32,7 +32,7 @@ public static class ConfigureServices
         services.AddScoped<AuditableEntitySaveChanges>();
         
         services.AddSingleton<IStockClient, StockClient>();
-        services.AddSingleton<IMatchingEngine, MatchingEngine>();
+        services.AddSingleton<IMatchingEngine, MatchingEngine.MatchingEngine>();
         
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();

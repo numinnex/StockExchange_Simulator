@@ -9,11 +9,9 @@ public interface IOrder
     public bool IsFilled { get; }
     public Guid StockId { get; init; }
     public Quantity? OpenQuantity { get; set; }
-    public Amount? OrderAmount { get; set; }
     public int FeeId { get; init; }
     public DateTimeOffset Timestamp { get; init; }
     public string UserId { get; init; }
     public string Symbol { get; init; }
-    public TradeType Type { get; set; }
-    public TradeCondition TradeCondition { get; set; }
+    public TradeType Type { get; init; }
 }

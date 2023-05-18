@@ -3,6 +3,7 @@ using Application.Common.Interfaces.Repository;
 using Domain.Entities;
 using Domain.Enums;
 using FluentAssertions;
+using Infrastructure.MatchingEngine;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;

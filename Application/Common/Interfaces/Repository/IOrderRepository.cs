@@ -9,5 +9,6 @@ public interface IOrderRepository
     Task<List<MarketOrder>> GetAllMarketOrdersAsync(CancellationToken token, Expression<Func<MarketOrder, bool>>? filter = null,
         string? includeProperties = null); 
     void Update(IOrder order);
+    void Remove(IOrder order);
     Task SaveChangesAsync(CancellationToken token);
 }
