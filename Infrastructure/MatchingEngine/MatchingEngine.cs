@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repository;
 using Application.Common.Models;
-using Application.Common.Models.ReadModels;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.PriceLevels;
@@ -34,11 +33,22 @@ public class MatchingEngine : IMatchingEngine
         //TODO - create options pattern for matching engine settings (move to appsettings.json) 
         _stepSize = new (0.0000_0001m);
     }
+
+    public MatchingEngine(IServiceScopeFactory serviceScopeFactory, IBook doubleBook,
+        Queue<IReadOnlyList<PriceLevel>> doubleStopOrderQueue)
+    {
+        _serviceScopeFactory = serviceScopeFactory;
+        _stopOrdersQueue = new();
+        _books = new();
+        _books["APPL"] = doubleBook;
+        _stopOrdersQueue["APPL"] = doubleStopOrderQueue;
+        _stepSize = new (0.0000_0001m);
+    }
     //TODO - Create a constructor from which will inject book and queue as dependencies for double testing
     //   _books["default"] = book;
     //   _stopOrdersQueue["default"] = queue;
     //TODO - Change return type to OrderProcessingResult
-    public async Task<OrderCreationResult> AddOrder(IOrder order, CancellationToken token)
+    public async Task<Ok<OrderCreationResult?, StopOrderProcessingResult?>> AddOrder(IOrder order, CancellationToken token)
     {
         var book = GetOrCreateBook(order.Symbol);
         var queue = GetOrCreateQueue(order.Symbol);
@@ -48,13 +58,13 @@ public class MatchingEngine : IMatchingEngine
             {
                 var result =  await HandleMarketOrderWithOpenQuantity(marketOrder , token, book,queue);
                 var triggeredOrdersResult = await MatchAndAddTriggeredOrders(queue, book, token);
-                return result;
+                return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(result, triggeredOrdersResult);
             }
             if (marketOrder.OrderAmount is not null)
             {
                 var result = await HandleMarketOrderWithAmount(marketOrder, token, book, queue);
                 var triggeredOrdersResult = await MatchAndAddTriggeredOrders(queue, book, token);
-                return result;
+                return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(result, triggeredOrdersResult);
             }
         }
 
@@ -63,15 +73,28 @@ public class MatchingEngine : IMatchingEngine
             if (stopOrder.OpenQuantity is not null)
             {
                 await HandleStopOrder(stopOrder, token, book);
+                return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(
+                null, null, true
+            );
             }
+
         }
-        
         //get rid of this later
-        return new OrderCreationResult
-        {
-            IsFilled = false,
-            IsMatched = false
-        };
+        return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(
+            new OrderCreationResult
+            {
+                IsFilled = false,
+                IsMatched = false,
+
+            },
+            new StopOrderProcessingResult
+            {
+                FilledCount = 0,
+                MatchedCount = 0,
+                CostAccumulate = 0
+            },
+            false
+        );
     }
     //TODO - change this return type to something less bloated, I will use something else for testing
     private async Task<OrderCreationResult> HandleMarketOrderWithAmount(MarketOrder order, CancellationToken token,
@@ -168,10 +191,9 @@ public class MatchingEngine : IMatchingEngine
     }
     
 
-    //TODO - change return type
     private async Task<StopOrderProcessingResult> MatchAndAddTriggeredOrders(Queue<IReadOnlyList<PriceLevel>> queue, IBook book, CancellationToken token)
     {
-        int filledCount = 0;  
+        decimal filledCount = 0m;  
         int matchedCount = 0;
         decimal costAccum = 0;
         while (queue.TryDequeue(out var priceLevels))
@@ -199,7 +221,6 @@ public class MatchingEngine : IMatchingEngine
             MatchedCount = matchedCount
         };
     }
-    //TODO - change return type
     private async Task<StopOrderTriggeredResult> HandleTriggeredStopOrders(StopOrder order, CancellationToken token,
         IBook book,
         Queue<IReadOnlyList<PriceLevel>> queue)

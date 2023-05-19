@@ -26,5 +26,6 @@ public interface IBook
     public bool FillOrder(IOrder order, Quantity quantity, Price price);
     public bool CheckCanFillMarketOrderAmount(bool isBuy, Amount orderAmount);
     public IOrder? GetBestOffer(bool isBuy, string userId);
+    public void ClearBook();
 
 }

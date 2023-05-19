@@ -65,7 +65,7 @@ public class Side<T> where T : class, IPriceLevel, new()
 
     public IReadOnlyList<T> RemovePriceLevelsTill(Price price)
     {
-        if (_bestPriceLevel is not null && _priceComparer.Compare(_bestPriceLevel.Price, price) < 0)
+        if (_bestPriceLevel is not null && _priceComparer.Compare(_bestPriceLevel.Price, price) <= 0)
         {
             List<T> priceLevels = new List<T>();
             foreach (var priceLevel in _priceLevels)
@@ -86,6 +86,11 @@ public class Side<T> where T : class, IPriceLevel, new()
                 _priceLevels.Remove(priceLevels[i]);
             }
 
+            if (_priceLevels.Count == 0)
+            {
+                _bestPriceLevel = null;
+            }
+
             return priceLevels.AsReadOnly();
         }
 
@@ -94,6 +99,10 @@ public class Side<T> where T : class, IPriceLevel, new()
 
     private void RemovePriceLevelIfEmpty(T priceLevel)
     {
+        if (_bestPriceLevel.Equals(priceLevel))
+        {
+            _bestPriceLevel = _priceLevels.ElementAt(_priceLevels.Count - 1);
+        }
         if (priceLevel.OrderCount == 0)
         {
             _priceLevels.Remove(priceLevel);
@@ -115,5 +124,12 @@ public class Side<T> where T : class, IPriceLevel, new()
             }
         }
         return priceLevel;
+    }
+
+    //for testing purposes only
+    public void Clear()
+    {
+        _priceLevels.Clear();
+        _bestPriceLevel = null;
     }
 }

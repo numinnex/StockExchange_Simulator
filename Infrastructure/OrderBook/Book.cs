@@ -154,6 +154,16 @@ public class Book : IBook
             ? _bids.BestPriceLevel?.FirstOrDefault(x => x.UserId != userId)
             : _asks.BestPriceLevel?.FirstOrDefault(x => x.UserId != userId);
     }
+
+    public void ClearBook()
+    {
+        _bids.Clear();
+        _asks.Clear();
+        _stopAsks.Clear();
+        _stopBids.Clear();
+        _currentMarketPrice = null;
+    }
+
     private void AddMarketOrder(MarketOrder order)
     {
         var side = order.IsBuy ? _bids : _asks;

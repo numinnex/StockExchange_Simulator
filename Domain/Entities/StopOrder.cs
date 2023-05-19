@@ -9,7 +9,7 @@ public sealed class StopOrder : Entity, IOrder
 {
     public required bool IsBuy { get; init; }
     public bool IsFilled => OpenQuantity == 0;
-    public required bool IsTriggered { get; set; } = false;
+    public required bool IsTriggered { get; set; } 
     public required Guid StockId { get; init; }
     public Stock? Stock { get; init; }
     public required Price StopPrice { get; init; }
