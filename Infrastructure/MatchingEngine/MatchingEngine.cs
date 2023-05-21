@@ -6,17 +6,21 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.PriceLevels;
 using Domain.ValueObjects;
+using Infrastructure.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure.MatchingEngine;
 
 public class MatchingEngine : IMatchingEngine
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    
+    private readonly IOptionsMonitor<MatchingEngineOptions> _meOptions;
+    private MatchingEngineOptions _meSettings;
+
     //This can be solved differently 
-    //1) Create a self hosted Book project in docker, that will expose api through http to 
-    //add orders/remove orders and maintain the state of the book
+    //1) Create a self-hosted Book project in docker, that will expose api through http to 
+    //add/remove orders and maintain the state of the book
     //2) Create a IBookProvider and IQueueProvider that will expose api to manage book and queue
     private readonly ConcurrentDictionary<string, IBook> _books;
     private readonly ConcurrentDictionary<string, Queue<IReadOnlyList<PriceLevel>>> _stopOrdersQueue;
@@ -24,16 +28,17 @@ public class MatchingEngine : IMatchingEngine
     
     [ActivatorUtilitiesConstructor]
     public MatchingEngine( 
-        IServiceScopeFactory serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory , IOptionsMonitor<MatchingEngineOptions> meOptions) 
     {
         _serviceScopeFactory = serviceScopeFactory;
+        _meOptions = meOptions;
+        _meSettings = meOptions.CurrentValue;
         //TODO - initialize the stopOrderQueues and books from database
         _stopOrdersQueue = new();
         _books = new();
-        //TODO - create options pattern for matching engine settings (move to appsettings.json) 
-        _stepSize = new (0.0000_0001m);
+        _stepSize = _meSettings.StepSize;
     }
-
+    //For testing purposes only
     public MatchingEngine(IServiceScopeFactory serviceScopeFactory, IBook doubleBook,
         Queue<IReadOnlyList<PriceLevel>> doubleStopOrderQueue)
     {
@@ -44,11 +49,19 @@ public class MatchingEngine : IMatchingEngine
         _stopOrdersQueue["APPL"] = doubleStopOrderQueue;
         _stepSize = new (0.0000_0001m);
     }
-    //TODO - Create a constructor from which will inject book and queue as dependencies for double testing
-    //   _books["default"] = book;
-    //   _stopOrdersQueue["default"] = queue;
-    //TODO - Change return type to OrderProcessingResult
-    public async Task<Ok<OrderCreationResult?, StopOrderProcessingResult?>> AddOrder(IOrder order, CancellationToken token)
+    
+    private ConcurrentDictionary<string, IBook> RestoreBookState()
+    {
+        throw new NotImplementedException();
+    }
+    private ConcurrentDictionary<string, Queue<IReadOnlyList<PriceLevel>>> RestoreQueueState()
+    {
+        throw new NotImplementedException();
+    }
+
+    //In order to get a real discriminated union I should have used OneOf package
+    //but it's not worth getting that dependency for one return type
+    public async Task<Ok<OrderProcessingResult?, StopOrderProcessingResult?>> AddOrder(IOrder order, CancellationToken token)
     {
         var book = GetOrCreateBook(order.Symbol);
         var queue = GetOrCreateQueue(order.Symbol);
@@ -58,13 +71,13 @@ public class MatchingEngine : IMatchingEngine
             {
                 var result =  await HandleMarketOrderWithOpenQuantity(marketOrder , token, book,queue);
                 var triggeredOrdersResult = await MatchAndAddTriggeredOrders(queue, book, token);
-                return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(result, triggeredOrdersResult);
+                return new Ok<OrderProcessingResult?, StopOrderProcessingResult?>(true , result, triggeredOrdersResult);
             }
             if (marketOrder.OrderAmount is not null)
             {
                 var result = await HandleMarketOrderWithAmount(marketOrder, token, book, queue);
                 var triggeredOrdersResult = await MatchAndAddTriggeredOrders(queue, book, token);
-                return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(result, triggeredOrdersResult);
+                return new Ok<OrderProcessingResult?, StopOrderProcessingResult?>(true ,result, triggeredOrdersResult);
             }
         }
 
@@ -72,32 +85,18 @@ public class MatchingEngine : IMatchingEngine
         {
             if (stopOrder.OpenQuantity is not null)
             {
-                await HandleStopOrder(stopOrder, token, book);
-                return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(
-                null, null, true
-            );
+                var result = await HandleStopOrder(stopOrder, token, book);
+                return new Ok<OrderProcessingResult?, StopOrderProcessingResult?>(result, null, null);
             }
 
         }
-        //get rid of this later
-        return new Ok<OrderCreationResult?, StopOrderProcessingResult?>(
-            new OrderCreationResult
-            {
-                IsFilled = false,
-                IsMatched = false,
-
-            },
-            new StopOrderProcessingResult
-            {
-                FilledCount = 0,
-                MatchedCount = 0,
-                CostAccumulate = 0
-            },
-            false
+        return new Ok<OrderProcessingResult?, StopOrderProcessingResult?>(
+            false,
+            OrderProcessingResult.Default,
+            StopOrderProcessingResult.Default
         );
     }
-    //TODO - change this return type to something less bloated, I will use something else for testing
-    private async Task<OrderCreationResult> HandleMarketOrderWithAmount(MarketOrder order, CancellationToken token,
+    private async Task<OrderProcessingResult> HandleMarketOrderWithAmount(MarketOrder order, CancellationToken token,
         IBook book, Queue<IReadOnlyList<PriceLevel>> queue)
     {
         var quantityByOrderAmount = GetQuantityByOrderAmount(order.OrderAmount!, book);
@@ -114,19 +113,15 @@ public class MatchingEngine : IMatchingEngine
             
             AddStopOrdersToQueue(previousMarketPrice, book, queue);
             
-            return new OrderCreationResult
+            return new OrderProcessingResult
             {
                 IsFilled = matchingResult.IsFilled,
                 IsMatched = matchingResult.IsMatched,
                 Cost = matchingResult.Cost,
-                AskLevelsCount = book.AskLevelsCount,
-                BidLevelsCount = book.BidLevelsCount,
-                BidsCount = book.BestBidsCount,
-                AsksCount = book.BestAsksCount
             };
         }
 
-        return new OrderCreationResult
+        return new OrderProcessingResult
         {
             IsFilled = false,
             IsMatched = false,
@@ -164,8 +159,7 @@ public class MatchingEngine : IMatchingEngine
 
         return result;
     }
-    //TODO - change return type there aswell
-    private async Task<OrderCreationResult> HandleMarketOrderWithOpenQuantity(MarketOrder order,
+    private async Task<OrderProcessingResult> HandleMarketOrderWithOpenQuantity(MarketOrder order,
         CancellationToken token, IBook book , Queue<IReadOnlyList<PriceLevel>> queue)
     {
         var previousMarketPrice = book.CurrentMarketPrice;
@@ -178,19 +172,14 @@ public class MatchingEngine : IMatchingEngine
 
         AddStopOrdersToQueue(previousMarketPrice, book , queue);
         
-        return new OrderCreationResult
+        return new OrderProcessingResult
         {
             IsFilled = matchingResult.IsFilled,
             IsMatched = matchingResult.IsMatched,
             Cost = matchingResult.Cost,
-            AskLevelsCount = book.AskLevelsCount,
-            BidLevelsCount = book.BidLevelsCount,
-            BidsCount = book.BestBidsCount,
-            AsksCount = book.BestAsksCount
         };
     }
     
-
     private async Task<StopOrderProcessingResult> MatchAndAddTriggeredOrders(Queue<IReadOnlyList<PriceLevel>> queue, IBook book, CancellationToken token)
     {
         decimal filledCount = 0m;  
@@ -245,9 +234,9 @@ public class MatchingEngine : IMatchingEngine
             TradeCondition = TradeCondition.None,
         };
         var result = await HandleMarketOrderWithOpenQuantity(marketOrder, token, book ,queue);
-        if (result.IsFilled || result.IsMatched)
-            orderRepository!.Remove(order);
         
+        // if (result.IsFilled || result.IsMatched)
+        //     await orderRepository!.Remove(order, token);
         return new StopOrderTriggeredResult
         {
             Cost = result.Cost ?? 0,
@@ -301,94 +290,90 @@ public class MatchingEngine : IMatchingEngine
 
         return _books[symbol];
     }
-    private async Task<MatchOrderResult> MatchWithOpenOrders(IOrder incommingOrder, IBook book, CancellationToken token)
+    private async Task<MatchOrderResult> MatchWithOpenOrders(MarketOrder incommingOrder, IBook book, CancellationToken token)
     {
         int iterCount = 0;
         while (true)
         {
-            //TODO - get rid of this if statement later
-            if (incommingOrder is MarketOrder incommingMarketOrder)
+            using var scope = _serviceScopeFactory.CreateScope();
+            var orderRepository = scope.ServiceProvider.GetService<IOrderRepository>();
+            var tradeListener = scope.ServiceProvider.GetService<ITradeListener>();
+
+            var restingMarketOrder =
+                book.GetBestOffer(!incommingOrder.IsBuy, incommingOrder.UserId) as MarketOrder;
+            if (restingMarketOrder is null)
             {
-                using var scope = _serviceScopeFactory.CreateScope();
-                var orderRepository = scope.ServiceProvider.GetService<IOrderRepository>();
-                var tradeListener = scope.ServiceProvider.GetService<ITradeListener>();
-
-                var restingMarketOrder =
-                    book.GetBestOffer(!incommingMarketOrder.IsBuy, incommingMarketOrder.UserId) as MarketOrder;
-                if (restingMarketOrder is null)
+                await tradeListener!.OnAcceptAsync(incommingOrder, token);
+                return new MatchOrderResult
                 {
-                    await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
-                    return new MatchOrderResult
-                    {
-                        IsFilled = false,
-                        IsMatched = iterCount > 0,
-                        Cost = incommingMarketOrder.Cost
-                    };
-                }
+                    IsFilled = false,
+                    IsMatched = iterCount > 0,
+                    Cost = incommingOrder.Cost 
+                };
+            }
 
-                if ((incommingMarketOrder.IsBuy && restingMarketOrder.Price <= incommingMarketOrder.Price)
-                    || (!incommingMarketOrder.IsBuy && restingMarketOrder.Price >= incommingMarketOrder.Price))
+            if ((incommingOrder.IsBuy && restingMarketOrder.Price <= incommingOrder.Price)
+                || (!incommingOrder.IsBuy && restingMarketOrder.Price >= incommingOrder.Price))
+            {
+                iterCount++;
+                var matchPrice = restingMarketOrder.Price;
+                Quantity maxQuantity;
+
+                if (incommingOrder.OpenQuantity! > 0)
                 {
-                    iterCount++;
-                    var matchPrice = restingMarketOrder.Price;
-                    Quantity maxQuantity;
+                    maxQuantity = Math.Min(incommingOrder.OpenQuantity!,
+                        restingMarketOrder.OpenQuantity!);
 
-                    if (incommingMarketOrder.OpenQuantity! > 0)
+                    incommingOrder.OpenQuantity -= maxQuantity;
+                    incommingOrder.UpdateTradeStatus();
+
+                    var cost = Math.Round(maxQuantity * matchPrice, 4);
+                    incommingOrder.Cost += cost;
+                    restingMarketOrder.Cost += cost;
+
+                    var feeProvider = scope.ServiceProvider.GetService<IFeeProvider>();
+
+                    var incommingFee = await feeProvider!.GetFeeAsync(incommingOrder.FeeId);
+                    var restingFee = await feeProvider.GetFeeAsync(restingMarketOrder.FeeId);
+                    if (restingFee is not null)
+                        restingMarketOrder.FeeAmount += Math.Round((cost * restingFee.MakerFee) / 100, 4);
+                    if (incommingFee is not null)
+                        incommingOrder.FeeAmount += Math.Round((cost * incommingFee.TakerFee) / 100, 4);
+
+                    //This method subtracts quantity from the resting order 
+                    var isRestingOrderFilled = book.FillOrder(restingMarketOrder,
+                        maxQuantity,
+                        matchPrice);
+                    restingMarketOrder.UpdateTradeStatus();
+                    var isIncommingOrderFilled = incommingOrder.IsFilled;
+
+                    await orderRepository!.Update(restingMarketOrder, token);
+
+                    var tradeFootprint = CreateTradeFootprint(matchPrice, maxQuantity, incommingOrder,
+                        restingMarketOrder, isRestingOrderFilled, isIncommingOrderFilled);
+                    await tradeListener!.OnTradeAsync(tradeFootprint, token);
+
+                    if (isIncommingOrderFilled)
                     {
-                        maxQuantity = Math.Min(incommingMarketOrder.OpenQuantity!,
-                            restingMarketOrder.OpenQuantity!);
-
-                        incommingMarketOrder.OpenQuantity -= maxQuantity;
-                        incommingMarketOrder.UpdateTradeStatus();
-
-                        var cost = Math.Round(maxQuantity * matchPrice, 4);
-                        incommingMarketOrder.Cost += cost;
-                        restingMarketOrder.Cost += cost;
-
-                        var feeProvider = scope.ServiceProvider.GetService<IFeeProvider>();
-
-                        var incommingFee = await feeProvider!.GetFeeAsync(incommingOrder.FeeId);
-                        var restingFee = await feeProvider.GetFeeAsync(restingMarketOrder.FeeId);
-                        if (restingFee is not null)
-                            restingMarketOrder.FeeAmount += Math.Round((cost * restingFee.MakerFee) / 100, 4);
-                        if (incommingFee is not null)
-                            incommingMarketOrder.FeeAmount += Math.Round((cost * incommingFee.TakerFee) / 100, 4);
-
-                        //This method subtracts quantity from the resting order 
-                        var isRestingOrderFilled = book.FillOrder(restingMarketOrder,
-                            maxQuantity,
-                            matchPrice);
-                        restingMarketOrder.UpdateTradeStatus();
-                        var isIncommingOrderFilled = incommingMarketOrder.IsFilled;
-
-                        orderRepository!.Update(restingMarketOrder);
-
-                        var tradeFootprint = CreateTradeFootprint(matchPrice, maxQuantity, incommingMarketOrder,
-                            restingMarketOrder, isRestingOrderFilled, isIncommingOrderFilled);
-                        await tradeListener!.OnTradeAsync(tradeFootprint, token);
-
-                        if (isIncommingOrderFilled)
+                        await tradeListener!.OnAcceptAsync(incommingOrder, token);
+                        return new MatchOrderResult
                         {
-                            await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
-                            return new MatchOrderResult
-                            {
-                                IsFilled = true,
-                                IsMatched = true,
-                                Cost = incommingMarketOrder.Cost
-                            };
-                        }
+                            IsFilled = true,
+                            IsMatched = true,
+                            Cost = incommingOrder.Cost,
+                        };
                     }
                 }
-                else
+            }
+            else
+            {
+                await tradeListener!.OnAcceptAsync(incommingOrder, token);
+                return new MatchOrderResult
                 {
-                    await tradeListener!.OnAcceptAsync(incommingMarketOrder, token);
-                    return new MatchOrderResult
-                    {
-                        IsFilled = false,
-                        IsMatched = iterCount > 0,
-                        Cost = incommingMarketOrder.Cost
-                    };
-                }
+                    IsFilled = false,
+                    IsMatched = iterCount > 0,
+                    Cost = incommingOrder.Cost,
+                };
             }
         }
     }

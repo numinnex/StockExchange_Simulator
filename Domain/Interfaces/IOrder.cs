@@ -1,7 +1,4 @@
-using Domain.Entities;
 using Domain.Enums;
-using Domain.Identity;
-using Domain.ValueObjects;
 
 public interface IOrder
 {

@@ -14,13 +14,6 @@ public sealed class TradeRepository : ITradeRepository
         _ctx = ctx;
     }
 
-    //TODO -- Add transaction
-    public async Task AddMarketOrderAsync(MarketOrder order, CancellationToken cancellationToken)
-    {
-        await _ctx.MarketOrders.AddAsync(order, cancellationToken);
-    }
-
-
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
         bool saveFailed;

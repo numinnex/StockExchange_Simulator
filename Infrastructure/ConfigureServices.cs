@@ -49,6 +49,7 @@ public static class ConfigureServices
 
         services.ConfigureOptions<TwelveDataApiOptionSetup>();
         services.ConfigureOptions<JwtSettingsOptionsSetup>();
+        services.ConfigureOptions<MatchingEngineOptionsSetup>();
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),

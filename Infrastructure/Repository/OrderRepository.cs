@@ -20,14 +20,26 @@ public sealed class OrderRepository : IOrderRepository
     }
     public async Task AddAsync(IOrder order, CancellationToken token)
     {
-        if (order is MarketOrder marketOrder)
-        {
-           await _marketOrder.AddAsync(marketOrder, token);
-        }
 
-        if (order is StopOrder stopOrder)
+        await using var transaction = await _ctx.Database.BeginTransactionAsync(token);
+        try
         {
-            await _stopOrder.AddAsync(stopOrder, token);
+            if (order is MarketOrder marketOrder)
+            {
+                await _marketOrder.AddAsync(marketOrder, token);
+            }
+
+            if (order is StopOrder stopOrder)
+            {
+                await _stopOrder.AddAsync(stopOrder, token);
+            }
+            await SaveChangesAsync(token);
+            await transaction.CommitAsync(token);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(token);
+            throw;
         }
     }
 
@@ -46,27 +58,52 @@ public sealed class OrderRepository : IOrderRepository
         return await query.ToListAsync(token);
     }
 
-    public void Update(IOrder order)
+    public async Task Update(IOrder order, CancellationToken token)
     {
-        if (order is MarketOrder marketOrder)
+        await using var transaction = await _ctx.Database.BeginTransactionAsync(token);
+        try
         {
-            _marketOrder.Update(marketOrder);
+            if (order is MarketOrder marketOrder)
+            {
+                _marketOrder.Update(marketOrder );
+            }
+
+            if (order is StopOrder stopOrder)
+            {
+                _stopOrder.Update(stopOrder );
+            }
+            await SaveChangesAsync(token);
+            await transaction.CommitAsync(token);
         }
-        if (order is StopOrder stopOrder)
+        catch
         {
-            _stopOrder.Update(stopOrder);
+            await transaction.RollbackAsync(token);
+            throw;
         }
     }
 
-    public void Remove(IOrder order)
+    public async Task Remove(IOrder order, CancellationToken token)
     {
-        if (order is MarketOrder marketOrder)
+        await using var transaction = await _ctx.Database.BeginTransactionAsync(token);
+        try
         {
-            _marketOrder.Remove(marketOrder);
+            if (order is MarketOrder marketOrder)
+            {
+                _marketOrder.Remove(marketOrder);
+            }
+
+            if (order is StopOrder stopOrder)
+            {
+                _stopOrder.Remove(stopOrder);
+            }
+
+            await SaveChangesAsync(token);
+            await transaction.CommitAsync(token);
         }
-        if (order is StopOrder stopOrder)
+        catch
         {
-            _stopOrder.Remove(stopOrder);
+            await transaction.RollbackAsync(token);
+            throw;
         }
     }
 
