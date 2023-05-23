@@ -12,6 +12,8 @@ using Xunit;
 
 namespace Infrastructure_Tests;
 
+//TODO - refactor the object creation inside of tests, to some builder/factory methods
+//TODO - remove all the _tradeListener and _orderRepository setups
 public sealed class MatchingEngineTests
 {
     private readonly IMatchingEngine _sut;
@@ -43,11 +45,11 @@ public sealed class MatchingEngineTests
     {
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync( new Fee()
-        {
-            Id = 1,
-            MakerFee = 0.25m,
-            TakerFee = 0.1m,
-        });
+         {
+             Id = 1,
+             MakerFee = 0.25m,
+             TakerFee = 0.1m,
+         });
         IOrder order = new MarketOrder()
         {
             Id = Guid.NewGuid(),
@@ -63,8 +65,6 @@ public sealed class MatchingEngineTests
             TradeCondition = TradeCondition.None,
             Symbol = "APPL"
         };
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(order, default));
         var result = await _sut.AddOrder(order, default);
 
         result.FirstValue.IsFilled.Should().BeFalse();

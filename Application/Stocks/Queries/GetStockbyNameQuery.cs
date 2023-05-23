@@ -1,7 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repository;
 using Application.Common.Models;
-using Application.Common.Models.ReadModels;
 using AutoMapper;
 using Contracts.V1.Responses;
 using MediatR;
@@ -9,7 +9,7 @@ using MediatR;
 namespace Application.Stocks.Queries;
 
 
-public sealed record GetStockbyNameQuery(string Symbol) : IRequest<Result<List<StockResponse>>>;
+public sealed record GetStockbyNameQuery(string Symbol ) : IRequest<Result<List<StockResponse>>>;
 public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQuery, Result<List<StockResponse>>>
 {
     private readonly IMapper _mapper;
@@ -25,16 +25,17 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
     
     public async Task<Result<List<StockResponse>>> Handle(GetStockbyNameQuery request, CancellationToken cancellationToken)
     {
-        var stocks = (await _stockRepository.
-            GetAllAsync(cancellationToken,x => x.Symbol == request.Symbol , "TimeSeries,Trades"));
 
+        var stocks = await _stockRepository.
+            GetAllAsync(cancellationToken,x => x.Symbol == request.Symbol 
+                ,"TimeSeries");
         if (stocks.Any())
         {
             var stocksMapped = _mapper.Map<List<StockResponse>>(stocks);
             return Result<List<StockResponse>>.Success(stocksMapped);
         }
 
-        stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol);
+        stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol );
         if (!stocks.Any())
         {
             return Result<List<StockResponse>>.Failure( new []

@@ -16,7 +16,7 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
         _ctx = ctx;
     }
 
-    public async Task<List<Stock>> GetAllAsync(CancellationToken token, Expression<Func<Stock, bool>>? filter = null, string? includeProperties = null)
+    public async Task<List<Stock>> GetAllAsync(CancellationToken token, Expression<Func<Stock, bool>>? filter = null, string? includeProperties = null  )
     {
         IQueryable<Stock> query = _ctx.Stocks;
 
@@ -26,7 +26,9 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
             {
                 if (prop == "TimeSeries")
                 {
-                    query = query.Include(x => x.TimeSeries).ThenInclude(x => x.StockValues);
+                    query = query.Include(x => x.TimeSeries)
+                        .ThenInclude(x => x.StockValues);
+
                 }
                 else
                 {
@@ -47,7 +49,7 @@ public sealed class StockRepository : Repository<Stock>, IStockRepository
         
     }
 
-    public async Task AddRangeAsync(IEnumerable<Stock> entities, CancellationToken token)
+    public async Task AddRangeAsync(List<Stock> entities, CancellationToken token)
     {
         await _ctx.Stocks.AddRangeAsync(entities,token);
     }

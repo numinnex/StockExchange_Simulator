@@ -20,7 +20,7 @@ public sealed class StockClient : IStockClient
         _client = client;
         _cache = cache;
     }
-    public async Task<List<Stock>> GetStocksBySymbolAsync(string name)
+    public async Task<List<Stock>> GetStocksBySymbolAsync(string name )
     {
         var stocksResponse = await _client
             .GetFromJsonAsync<StockApiResponse>($"stocks?country=United%20States&symbol={name}&format=json");
