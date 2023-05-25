@@ -1,13 +1,10 @@
 using Application.Auth.Commands;
-using Application.Common.Interfaces;
-using Azure;
 using Contracts.V1;
 using Contracts.V1.Requests;
 using Contracts.V1.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 
 namespace Presentation.Controllers.V1;
 
@@ -15,14 +12,12 @@ namespace Presentation.Controllers.V1;
 public sealed class IdentityController : ControllerBase
 {
     private readonly IMediator _mediator;
-
     public IdentityController(IMediator mediator)
     {
         _mediator = mediator;
     }
 
     [HttpPost(Routes.Identity.Register)]
-    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] UserRegisterRequest request, CancellationToken cancellationToken)
     {
         var response = await _mediator.Send(new RegisterUserCommand(request.Email, request.Password)
@@ -42,7 +37,6 @@ public sealed class IdentityController : ControllerBase
     }
 
     [HttpPost(Routes.Identity.Login)]
-    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] UserLoginRequest request, CancellationToken cancellationToken)
     {
         var response = await _mediator.Send(new LoginUserCommand(request.Email, request.Password)
@@ -62,7 +56,6 @@ public sealed class IdentityController : ControllerBase
     }
 
     [HttpPost(Routes.Identity.Refresh)]
-    [AllowAnonymous]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
        var response = await _mediator.Send(new RefreshTokenCommand(request.Token, request.RefreshToken)
@@ -79,5 +72,19 @@ public sealed class IdentityController : ControllerBase
            Token = response.Token!,
            RefreshToken = response.RefreshToken!
         }); 
+    }
+    [HttpPost(Routes.Identity.Identify)]
+    //[TypeFilter(typeof(AuthFilter))]
+    [Authorize]
+    public async Task<IActionResult> Identify([FromBody] IdentifyRequest request, CancellationToken cancellationToken)
+    {
+       var response = await _mediator.Send(new IdentifyCommand(request.Token )
+           , cancellationToken);
+       if (response.IsSuccess)
+       {
+           return Ok(response);
+       }
+
+       return BadRequest(response);
     }
 }

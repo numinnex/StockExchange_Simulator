@@ -2,6 +2,7 @@ using Application.Common.Interfaces;
 using Application.Stocks.Queries;
 using Contracts.V1;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.V1;
@@ -10,11 +11,9 @@ namespace Presentation.Controllers.V1;
 public class StockController : ControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly IStockClient _client;
-        public StockController(IMediator mediator, IStockClient client)
+        public StockController(IMediator mediator )
         {
             _mediator = mediator;
-            _client = client;
         }
 
         [HttpGet(Routes.Stock.GetBySymbol)]

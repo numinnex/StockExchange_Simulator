@@ -1,35 +1,43 @@
+using System.Text;
 using Application;
 using Infrastructure;
 using Infrastructure.Database;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 var presentationAssembly = typeof(Presentation.AssemblyReference).Assembly;
+
+builder.Services.AddScoped<AuthFilter>();
+
 builder.Services.AddControllers()
     .AddApplicationPart(presentationAssembly);
 
 builder.Services.AddApplicationServices();
-
-
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(x =>
 {
-    x.SwaggerDoc("v1" , new OpenApiInfo() {Title = "Stock API" , Version = "v1"});
+    x.SwaggerDoc("v1", new OpenApiInfo() { Title = "REST Api", Version = "v1" });
+
     x.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Description = "JWT Authorization header using the bearer scheme",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
         BearerFormat = "JWT",
         Scheme = "Bearer"
     });
-    x.AddSecurityRequirement(new OpenApiSecurityRequirement()
+
+    x.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -46,19 +54,6 @@ builder.Services.AddSwaggerGen(x =>
 });
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -89,5 +84,19 @@ using (var scope = app.Services.CreateScope())
         await dbContext.SaveChangesAsync();
     }
 }
+    
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
 
 app.Run();

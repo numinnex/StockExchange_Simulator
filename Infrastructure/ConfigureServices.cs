@@ -69,24 +69,21 @@ public static class ConfigureServices
         services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
-
         // Auth
+        var jwtSettings = new JwtSettingsOptions();
+        configuration.Bind(nameof(JwtSettingsOptions) ,jwtSettings );
+
         services.AddScoped<IIdentityService, IdentityService>();
 
-        var jwtSettings = configuration.GetSection(nameof(JwtSettingsOptions));
-
-        var tokenValidationParamters = new TokenValidationParameters
+        var tokenValidationParameters = new TokenValidationParameters
         {
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings["Secret"])),
             ValidateIssuer = false,
             ValidateAudience = false,
-            RequireExpirationTime = false,
-            ValidateLifetime = true,
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
         };
-        services.AddSingleton(tokenValidationParamters);
-
-
         services.AddAuthentication(x =>
         {
             x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -95,11 +92,10 @@ public static class ConfigureServices
         }).AddJwtBearer(x =>
         {
             x.SaveToken = true;
-            x.TokenValidationParameters = tokenValidationParamters;
-
+            x.TokenValidationParameters = tokenValidationParameters;
         });
-        services.AddAuthorization();
-
+        
+        services.AddSingleton(tokenValidationParameters);
         return services;
     }
 }

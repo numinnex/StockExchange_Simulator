@@ -1,5 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
 using Application.Common.Interfaces;
 using Domain.Auth;
@@ -10,7 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Infrastructure.AuthService;
 
@@ -61,7 +60,7 @@ public sealed class IdentityService :  IIdentityService
                 Success = false
             };
         }
-        await _userManager.AddToRoleAsync(newUser, "Admin");
+        await _userManager.AddToRoleAsync(newUser, "User");
         return await GenerateAuthenticationResultForUserAsync(newUser);
 
     }
@@ -77,7 +76,6 @@ public sealed class IdentityService :  IIdentityService
                 Success = false
             };
         }
-
         var userHasValidPassword = await _userManager.CheckPasswordAsync(user, password);
         if (!userHasValidPassword)
         {
@@ -98,7 +96,7 @@ public sealed class IdentityService :  IIdentityService
         {
             return new AuthenticationResult
             {
-                Errors = new[] { "Invalid token erro" },
+                Errors = new[] { "Invalid token error" },
                 Success = false
             };
             
@@ -217,65 +215,46 @@ public sealed class IdentityService :  IIdentityService
 
     private async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(ApplicationUser user)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_jwtSettings.Value.Secret);
 
-        var claims = new List<Claim>
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Value.Secret));
+        var claims = new Claim[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("id", user.Id)
         };
-        var userRoles = await _userManager.GetRolesAsync(user);
+        
+        SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        
+        var token = new JwtSecurityToken(
+            issuer: null, 
+            audience: null, 
+            claims: claims, 
+            notBefore: null,
+            expires: DateTime.UtcNow.AddMinutes(10),
+            signingCredentials: credentials);
+        
 
-        foreach (var userRole in userRoles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role , userRole));
-            var role = await _roleManager.FindByNameAsync(userRole);
-            if (role is null)
-            {
-                continue;
-            }
+        var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
 
-            var roleClaims = await _roleManager.GetClaimsAsync(role);
-            foreach (var roleClaim in roleClaims)
-            {
-                if (claims.Contains(roleClaim))
-                {
-                    continue;    
-                }
-                claims.Add(roleClaim);
-            }
-            var userClaims = await _userManager.GetClaimsAsync(user);
-            claims.AddRange(userClaims);
-            
-        }
-
-        var tokenDescriptor = new SecurityTokenDescriptor()
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.Add(_jwtSettings.Value.TokenLifetime),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-        };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
         var refreshToken = new RefreshToken()
         {
-            JwtId = token.Id,
+            JwtId = Guid.NewGuid().ToString(),
             UserId = user.Id,
             CreationDate = DateTime.UtcNow,
             ExpiryDate = DateTime.UtcNow.AddMonths(6)
         };
+
         await _ctx.RefreshTokens.AddAsync(refreshToken);
         await _ctx.SaveChangesAsync();
 
         return new AuthenticationResult()
         {
             Success = true,
-            Token = tokenHandler.WriteToken(token),
+            Token = tokenValue ,
             RefreshToken = refreshToken.Token,
             Errors = Enumerable.Empty<string>()
-        };
+        }; 
+        
     }
     
 }
