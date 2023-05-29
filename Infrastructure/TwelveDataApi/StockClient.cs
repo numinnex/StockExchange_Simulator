@@ -1,14 +1,12 @@
 using System.Net.Http.Json;
 using Application.Common.Interfaces;
 using Application.Common.Models.ReadModels;
+using Contracts.V1.Responses;
 using Domain.Entities;
-using Domain.ValueObjects;
-using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
+using TimeSeriesResponse = Application.Common.Models.ReadModels.TimeSeriesResponse;
 
 namespace Infrastructure.TwelveDataApi;
-
 
 public sealed class StockClient : IStockClient
 {
@@ -20,10 +18,32 @@ public sealed class StockClient : IStockClient
         _client = client;
         _cache = cache;
     }
+
+
+    public async Task<List<SymbolLookupResponse>> SymbolLookupAsync(string symbol)
+    {
+        var response = await _client.GetFromJsonAsync<SymbolLookupApiResponse>(
+            $"symbol_search?outputsize=120&symbol={symbol}");
+        if (response!.Data.Any())
+        {
+            var responseMapped = response.Data.Where(
+                    x => x.Country == "United States" && x.Exchange == "NASDAQ"
+                    && !string.IsNullOrEmpty(x.Instrument_Name))
+                .Take(25)
+                .Select(x => new SymbolLookupResponse()
+                {
+                    Symbol = x.Symbol,
+                    Description = x.Instrument_Name
+                }).ToList();
+            return responseMapped;
+        }
+        return Enumerable.Empty<SymbolLookupResponse>().ToList();
+    }
+
     public async Task<List<Stock>> GetStocksBySymbolAsync(string name )
     {
         var stocksResponse = await _client
-            .GetFromJsonAsync<StockApiResponse>($"stocks?country=United%20States&symbol={name}&format=json");
+            .GetFromJsonAsync<StockApiResponse>($"stocks?country=United%20States&exchange=NASDAQ&symbol={name}&format=json");
 
         if (stocksResponse!.Data.Any())
         {

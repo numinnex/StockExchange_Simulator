@@ -12,7 +12,7 @@ public sealed class RefreshToken
     public required string JwtId { get; init; }
     public DateTime CreationDate { get; set; }
     public DateTime ExpiryDate { get; set; }
-    public bool Used { get; set; }
+    public bool Used { get; set; } = false;
     public bool Invalidated { get; set; }
     public required string UserId { get; init; }
     [ForeignKey(nameof(UserId))]

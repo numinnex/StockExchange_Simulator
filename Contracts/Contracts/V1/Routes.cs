@@ -10,6 +10,7 @@ public static class Routes
     public static class Stock
     {
         public const string GetBySymbol = Base + "/stock/{symbol}";
+        public const string SymbolLookup = Base + "/stock/lookup";
         public const string GetRealtimePrice = Base + "/stock/price/{symbol}";
     }
     public static class Identity

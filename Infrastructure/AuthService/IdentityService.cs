@@ -169,25 +169,26 @@ public sealed class IdentityService :  IIdentityService
 
         await _ctx.SaveChangesAsync();
 
-        var user = await _userManager.FindByIdAsync(validatedToken.Claims.FirstOrDefault(x => x.Type == "id")!.Value);
+        var user = await _userManager.FindByIdAsync(
+            validatedToken.Claims.FirstOrDefault(x => x.Properties.First().Value == JwtRegisteredClaimNames.Sub)!.Value);
         
         return await GenerateAuthenticationResultForUserAsync(user!);
 
     }
-
     public async Task<bool> UserExistsAsync(string userId, CancellationToken token)
     {
         var result = await _userManager.FindByIdAsync(userId);
         return result is not null;
     }
-
     private ClaimsPrincipal GetPrincipalFromToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
+        _tokenValidationParameters.ValidateLifetime = false;
 
         try
         {
             var principal = tokenHandler.ValidateToken(token , _tokenValidationParameters , out var validToken);
+            _tokenValidationParameters.ValidateLifetime = true;
             if (!IsJwtWithValidSecurityAlgorithm(validToken))
             {
                 return null; 
@@ -196,8 +197,9 @@ public sealed class IdentityService :  IIdentityService
             return principal;
 
         }
-        catch
+        catch(Exception e)
         {
+            _tokenValidationParameters.ValidateLifetime = true;
             return null;
         }
     }
@@ -221,6 +223,7 @@ public sealed class IdentityService :  IIdentityService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
         
         SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -230,16 +233,16 @@ public sealed class IdentityService :  IIdentityService
             audience: null, 
             claims: claims, 
             notBefore: null,
-            expires: DateTime.UtcNow.AddMinutes(10),
+            expires: DateTime.UtcNow.Add(_jwtSettings.Value.TokenLifetime),
             signingCredentials: credentials);
         
-
         var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
 
         var refreshToken = new RefreshToken()
         {
-            JwtId = Guid.NewGuid().ToString(),
+            JwtId = token.Id, 
             UserId = user.Id,
+            Used = false,
             CreationDate = DateTime.UtcNow,
             ExpiryDate = DateTime.UtcNow.AddMonths(6)
         };

@@ -83,6 +83,7 @@ public static class ConfigureServices
             ValidateAudience = false,
             IssuerSigningKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            ClockSkew = TimeSpan.FromMinutes(1)
         };
         services.AddAuthentication(x =>
         {

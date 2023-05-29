@@ -1,19 +1,16 @@
-using System.Text;
 using Application;
 using Infrastructure;
 using Infrastructure.Database;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 var presentationAssembly = typeof(Presentation.AssemblyReference).Assembly;
 
-builder.Services.AddScoped<AuthFilter>();
+//used for debugging purposes
+//builder.Services.AddScoped<AuthFilter>();
 
 builder.Services.AddControllers()
     .AddApplicationPart(presentationAssembly);
@@ -25,8 +22,7 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(x =>
 {
-    x.SwaggerDoc("v1", new OpenApiInfo() { Title = "REST Api", Version = "v1" });
-
+    x.SwaggerDoc("v1", new OpenApiInfo() { Title = "Stock Exchange Api", Version = "v1" });
     x.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
         Description = "JWT Authorization header using the bearer scheme",

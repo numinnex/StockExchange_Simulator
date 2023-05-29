@@ -1,6 +1,6 @@
-using Application.Common.Interfaces;
 using Application.Stocks.Queries;
 using Contracts.V1;
+using Contracts.V1.Requests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +17,7 @@ public class StockController : ControllerBase
         }
 
         [HttpGet(Routes.Stock.GetBySymbol)]
+        [Authorize]
         public async Task<IActionResult> GetBySymbol([FromRoute] string symbol , CancellationToken token)
         {
             var response = await _mediator.Send(new GetStockbyNameQuery(symbol), token);
@@ -27,6 +28,21 @@ public class StockController : ControllerBase
                 return NotFound(response.Errors);
 
         return BadRequest(response.Errors);
-    }
+        }
+
+        [HttpPost(Routes.Stock.SymbolLookup)]
+        [Authorize]
+        public async Task<IActionResult> SymbolLookup([FromBody]SymbolLookupRequest request , CancellationToken token)
+        {
+            var response = await _mediator.Send(new SymbolLookupQuery(request.Symbol));
+
+            if (response.IsSuccess)
+            {
+                return Ok(response.Value);
+            }
+
+            return BadRequest(response.Errors);
+        }
+        
 
 }
