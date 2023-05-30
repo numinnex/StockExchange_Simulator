@@ -35,7 +35,7 @@ public sealed class GetStockByNameQueryHandler : IRequestHandler<GetStockbyNameQ
             return Result<List<StockResponse>>.Success(stocksMapped);
         }
 
-        stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol );
+        stocks = await _stockClient.GetStocksBySymbolAsync(request.Symbol);
         if (!stocks.Any())
         {
             return Result<List<StockResponse>>.Failure( new []

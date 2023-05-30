@@ -4,6 +4,7 @@ using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230530150646_AddedVolumeField")]
+    partial class AddedVolumeField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,10 +148,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("HighMonth")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal");
 
                     b.Property<decimal>("LowMonth")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -167,7 +170,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("float");
 
                     b.Property<decimal>("Volume")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal");
 
                     b.HasKey("Id");
 
@@ -992,7 +995,7 @@ namespace Infrastructure.Migrations
                                 .HasColumnType("int");
 
                             b1.Property<decimal>("Value")
-                                .HasColumnType("decimal(18,2)");
+                                .HasColumnType("decimal");
 
                             b1.HasKey("TradeFootprintId");
 

@@ -74,7 +74,7 @@ file sealed class TradeFootprintTableConfiguration : IEntityTypeConfiguration<Tr
     public void Configure(EntityTypeBuilder<TradeFootprint> builder)
     {
         builder.OwnsOne(x => x.Quantity, a => a.Property(
-                x => x.Value).HasColumnType("decimal"));
+                x => x.Value).HasColumnType("decimal(18,2)"));
         builder.OwnsOne(x => x.MatchPrice, a => a.Property(
                 x => x.Value).HasColumnType("money"));
 
@@ -116,6 +116,10 @@ file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>
         builder.Property(x => x.Currency)
             .HasMaxLength(100)
             .IsRequired();
+        
+        builder.Property(x => x.Volume).HasColumnType("decimal(18,4)");
+        builder.Property(x => x.HighMonth).HasColumnType("decimal(18,4)");
+        builder.Property(x => x.LowMonth).HasColumnType("decimal(18,4)");
 
         builder.OwnsOne(x => x.Change,
             a => a.Property(x => x.Value).HasColumnType("money"));
@@ -126,7 +130,6 @@ file sealed class StockTableConfiguration : IEntityTypeConfiguration<Stock>
             .HasForeignKey<Stock>(x => x.TimeSeriesId);
     }
 }
-
 file sealed class StockSnapshotTableConfiguration : IEntityTypeConfiguration<StockSnapshot>
 {
     public void Configure(EntityTypeBuilder<StockSnapshot> builder)
@@ -138,10 +141,8 @@ file sealed class StockSnapshotTableConfiguration : IEntityTypeConfiguration<Sto
 
         builder.HasOne(x => x.TimeSeries)
             .WithMany(x => x.StockValues);
-
     }
 }
-
 file class TimeSeriesTableConfiguration : IEntityTypeConfiguration<TimeSeries>
 {
     public void Configure(EntityTypeBuilder<TimeSeries> builder)
@@ -152,7 +153,6 @@ file class TimeSeriesTableConfiguration : IEntityTypeConfiguration<TimeSeries>
             .WithOne(x => x.TimeSeries);
     }
 }
-
 file sealed class PortfolioTableConfiguration : IEntityTypeConfiguration<Portfolio>
 {
     public void Configure(EntityTypeBuilder<Portfolio> builder)
@@ -164,7 +164,6 @@ file sealed class PortfolioTableConfiguration : IEntityTypeConfiguration<Portfol
         builder.OwnsMany(x => x.Positions);
     }
 }
-
 file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<MarketOrder>
 {
     public void Configure(EntityTypeBuilder<MarketOrder> builder)

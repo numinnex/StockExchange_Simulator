@@ -3,6 +3,7 @@ using Infrastructure;
 using Infrastructure.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
+using Presentation.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ var presentationAssembly = typeof(Presentation.AssemblyReference).Assembly;
 
 builder.Services.AddControllers()
     .AddApplicationPart(presentationAssembly);
+builder.Services.AddSignalR();
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -86,12 +88,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors(builder =>
+{
+    builder.WithOrigins("http://localhost:5173")
+        .AllowAnyHeader()
+        .WithMethods("GET", "POST", "PUT", "DELETE")
+        .AllowCredentials();
+});
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHub<PriceHub>("/price");
 app.MapControllers();
 
 

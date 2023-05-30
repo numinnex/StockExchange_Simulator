@@ -29,7 +29,7 @@ public sealed class StockClient : IStockClient
             var responseMapped = response.Data.Where(
                     x => x.Country == "United States" && x.Exchange == "NASDAQ"
                     && !string.IsNullOrEmpty(x.Instrument_Name))
-                .Take(25)
+                .Take(15)
                 .Select(x => new SymbolLookupResponse()
                 {
                     Symbol = x.Symbol,
@@ -45,8 +45,15 @@ public sealed class StockClient : IStockClient
         var stocksResponse = await _client
             .GetFromJsonAsync<StockApiResponse>($"stocks?country=United%20States&exchange=NASDAQ&symbol={name}&format=json");
 
+        //minmax?symbol=AAPL&interval=1month&time_period=30&format=json&outputsize=1&series_type=high
+
+
         if (stocksResponse!.Data.Any())
         {
+            var openHiLow = await _client
+                .GetFromJsonAsync<StockHiLoResponse>(
+                    $"minmax?symbol={name}&interval=1month&time_period=30&format=json&outputsize=1&series_type=open");
+        
             var stockPriceResponse = await _client.GetAsync($"price?symbol={name}&format=json");
             var stocksTimeSeriesResponse =
                 await _client.GetFromJsonAsync<TimeSeriesResponse>(
@@ -64,7 +71,7 @@ public sealed class StockClient : IStockClient
 
             foreach (var stockReadModel in stocksResponse.Data.ToArray())
             {
-                var newStock = MapStockResponse(stockReadModel, price);
+                var newStock = MapStockResponse(stockReadModel, price , openHiLow!);
                 var timeSeries = MapTimeSeriesResponse(stocksTimeSeriesResponse, newStock);
                 newStock.TimeSeries = timeSeries;
                 stocksResult.Add(newStock);
@@ -94,10 +101,13 @@ public sealed class StockClient : IStockClient
         return _cache.Get<decimal>(symbol);
     }
 
-    private static Stock MapStockResponse(StockReadModel stockReadModel, decimal price)
+    private static Stock MapStockResponse(StockReadModel stockReadModel, decimal price, StockHiLoResponse openHiLo)
     {
         var newStock = new Stock
         {
+            Volume = 0,
+            HighMonth = openHiLo.values.First().max,
+            LowMonth = openHiLo.values.First().min,
             Name = stockReadModel.Name,
             Country = stockReadModel.Country,
             Currency = stockReadModel.Currency,
