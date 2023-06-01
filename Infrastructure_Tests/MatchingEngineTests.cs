@@ -3,8 +3,8 @@ using Application.Common.Interfaces.Repository;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.PriceLevels;
-using Domain.ValueObjects;
 using FluentAssertions;
+using Infrastructure_Tests.Utils.Factories;
 using Infrastructure.MatchingEngine;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -12,8 +12,6 @@ using Xunit;
 
 namespace Infrastructure_Tests;
 
-//TODO - refactor the object creation inside of tests, to some builder/factory methods
-//TODO - remove all the _tradeListener and _orderRepository setups
 public sealed class MatchingEngineTests
 {
     private readonly IMatchingEngine _sut;
@@ -50,21 +48,11 @@ public sealed class MatchingEngineTests
              MakerFee = 0.25m,
              TakerFee = 0.1m,
          });
-        IOrder order = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "test-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 12, 
-            OrderAmount = null,
-            Price = 69,
-            FeeId = 1,
-            Type = TradeType.BuyMarket ,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var order = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            12,
+            69,
+            _dateTimeProvider
+        );
         var result = await _sut.AddOrder(order, default);
 
         result.FirstValue.IsFilled.Should().BeFalse();
@@ -78,7 +66,6 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task SellMarketOrderShouldAddOrderToBook()
     {
-        
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync( new Fee()
         {
@@ -86,23 +73,11 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-        IOrder order = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "test-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 12, 
-            OrderAmount = null,
-            Price = 69,
-            FeeId = 1,
-            Type = TradeType.BuyMarket ,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(order, default));
+        var order = OrderFactory.CreateSellMarketOrderWithQuantity(1,
+            12,
+            69,
+            _dateTimeProvider
+        );
         var result = await _sut.AddOrder(order, default);
 
         result.FirstValue.IsFilled.Should().BeFalse();
@@ -117,38 +92,18 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task BuyAndSellOrdersShouldGetMatched()
     {
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "test-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder.StockId,
-            UserId = "another-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
+         
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            10,
+            70,
+            _dateTimeProvider
+        );
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(2,
+            10,
+            70,
+            _dateTimeProvider
+        ); 
+        
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
         {
@@ -156,10 +111,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
-
 
         var buyResult = await _sut.AddOrder(buyOrder, default);
         _book.BestBidsCount.Should().Be(1);
@@ -177,38 +128,18 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task BuyOrdersWithOrderAmountShouldMatchSellOrder()
     {
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "test-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = null,
-            OrderAmount = 300,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder.StockId,
-            UserId = "another-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithOrderAmount(
+            1,
+            300,
+            70,
+            _dateTimeProvider
+        );
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(
+            2,
+            10,
+            70,
+            _dateTimeProvider);
+       
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
         {
@@ -216,9 +147,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
 
         var sellResult = await _sut.AddOrder(sellOrder, default);
         _book.BestAsksCount.Should().Be(1);
@@ -236,38 +164,17 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task BuyOrderShouldBePartiallyFilled()
     {
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "test-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 12,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder.StockId,
-            UserId = "another-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(
+            1,
+            12,
+            70,
+            _dateTimeProvider);
+     
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(2,
+            10,
+            70,
+            _dateTimeProvider);
+        
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
         {
@@ -276,15 +183,11 @@ public sealed class MatchingEngineTests
             TakerFee = 0.1m,
         });
 
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
-
         var buyResult = await _sut.AddOrder(buyOrder, default);
         _book.BestBidsCount.Should().Be(1);
         var sellResult = await _sut.AddOrder(sellOrder, default);
         _book.BestBidsCount.Should().Be(1);
         _book.BestAsksCount.Should().Be(0);
-
 
         buyResult.FirstValue.IsFilled.Should().BeFalse();
         buyResult.FirstValue.IsMatched.Should().BeFalse();
@@ -295,38 +198,12 @@ public sealed class MatchingEngineTests
      [Fact]
     public async Task SellOrderShouldBePartiallyFilled()
     {
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "test-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 5,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder.StockId,
-            UserId = "another-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            5,
+            70,
+            _dateTimeProvider);
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(2,
+            10,70,_dateTimeProvider);
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
         {
@@ -335,15 +212,11 @@ public sealed class MatchingEngineTests
             TakerFee = 0.1m,
         });
 
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
-
         var buyResult = await _sut.AddOrder(buyOrder, default);
         _book.BestBidsCount.Should().Be(1);
         var sellResult = await _sut.AddOrder(sellOrder, default);
         _book.BestBidsCount.Should().Be(0);
         _book.BestAsksCount.Should().Be(1);
-        
 
         buyResult.FirstValue.IsFilled.Should().BeFalse();
         buyResult.FirstValue.IsMatched.Should().BeFalse();
@@ -355,53 +228,19 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task MatchingOrdersWithDifferentQuantitiesAndPrices()
     {
-        var buyOrder1 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user1",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var buyOrder1 = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            10,
+            70,
+            _dateTimeProvider);
+        var buyOrder2 = OrderFactory.CreateBuyMarketOrderWithQuantity(2,
+            5,
+            75,
+            _dateTimeProvider);
 
-        var buyOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = buyOrder1.StockId,
-            UserId = "user2",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 5,
-            OrderAmount = null,
-            Price = 75,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder1.StockId,
-            UserId = "another-user-id",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 15,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(3,
+            15,
+            70,
+            _dateTimeProvider);
 
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
@@ -410,9 +249,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
 
         var buyResult1 = await _sut.AddOrder(buyOrder1, default);
         _book.BestBidsCount.Should().Be(1);
@@ -424,7 +260,6 @@ public sealed class MatchingEngineTests
         _book.BestBidsCount.Should().Be(0);
         _book.BidSide.Count().Should().Be(0);
         _book.BestAsksCount.Should().Be(0);
-
 
         buyResult1.FirstValue.IsFilled.Should().BeFalse();
         buyResult1.FirstValue.IsMatched.Should().BeFalse();
@@ -438,53 +273,19 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task MatchingOrdersWithSellQuantityEqualToSumOfBuyQuantities()
     {
-        var buyOrder1 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user1",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var buyOrder1 = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            10,
+            70,
+            _dateTimeProvider);
+        var buyOrder2 = OrderFactory.CreateBuyMarketOrderWithQuantity(2,
+            5,
+            70,
+            _dateTimeProvider);
 
-        var buyOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = buyOrder1.StockId,
-            UserId = "user2",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(20),
-            OpenQuantity = 5,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder1.StockId,
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMinutes(2),
-            OpenQuantity = 15,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(3,
+            15,
+            70,
+            _dateTimeProvider);
 
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
@@ -494,9 +295,6 @@ public sealed class MatchingEngineTests
             TakerFee = 0.1m,
         });
 
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
-
         var buyResult1 = await _sut.AddOrder(buyOrder1, default);
         _book.BestBidsCount.Should().Be(1);
         var buyResult2 = await _sut.AddOrder(buyOrder2, default);
@@ -504,7 +302,6 @@ public sealed class MatchingEngineTests
         var sellResult = await _sut.AddOrder(sellOrder, default);
         _book.BestBidsCount.Should().Be(0);
         _book.BestAsksCount.Should().Be(0);
-
 
         buyResult1.FirstValue.IsFilled.Should().BeFalse();
         buyResult1.FirstValue.IsMatched.Should().BeFalse();
@@ -517,53 +314,18 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task MatchingOrdersWithBuyQuantityEqualToSumOfSellQuantities()
     {
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user1",
-            Timestamp = _dateTimeProvider.Object.Now,
-            OpenQuantity = 15,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
-
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder.StockId,
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(2),
-            OpenQuantity = 5,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = buyOrder.StockId,
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(2),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 70,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            15,
+            70,
+            _dateTimeProvider);
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(2,
+            5,
+            70,
+            _dateTimeProvider);
+        var sellOrder2 = OrderFactory.CreateSellMarketOrderWithQuantity(3,
+            10,
+            70,
+            _dateTimeProvider);
 
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
@@ -572,9 +334,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
 
         var buyResult = await _sut.AddOrder(buyOrder, default);
         _book.BestBidsCount.Should().Be(1);
@@ -597,51 +356,18 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task MatchingSellOrdersWithBuyOrdersShouldChoseLowerPrice()
     {
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(2),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 80,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        }; 
-        var sellOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user2",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(4),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        }; 
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(12),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        }; 
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(1,
+            10,
+            80,
+            _dateTimeProvider);
+        var sellOrder2 = OrderFactory.CreateSellMarketOrderWithQuantity(2,
+            10,
+            100,
+            _dateTimeProvider);
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(3,
+            10,
+            100,
+            _dateTimeProvider);
         
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
@@ -650,10 +376,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
-        
         
         var sellResult = await _sut.AddOrder(sellOrder, default);
         _book.BestAsksCount.Should().Be(1);
@@ -664,7 +386,6 @@ public sealed class MatchingEngineTests
         var buyResult = await _sut.AddOrder(buyOrder, default);
         _book.BestAsksCount.Should().Be(1);
         _book.AskLevelsCount.Should().Be(1);
-
         
         sellResult.FirstValue.IsFilled.Should().BeFalse();
         sellResult.FirstValue.IsMatched.Should().BeFalse();
@@ -679,51 +400,18 @@ public sealed class MatchingEngineTests
      [Fact]
     public async Task MatchingBuyOrdersWithSellOrdersShouldChoseHigherPrice()
     {
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(2),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        }; 
-        var buyOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user2",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(4),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 80,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        }; 
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(12),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 80,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        }; 
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(1,
+            10,
+            100,
+            _dateTimeProvider);
+        var buyOrder2 = OrderFactory.CreateBuyMarketOrderWithQuantity(2,
+            10,
+            80,
+            _dateTimeProvider);
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(3,
+            10,
+            80,
+            _dateTimeProvider);
         
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
@@ -733,10 +421,6 @@ public sealed class MatchingEngineTests
             TakerFee = 0.1m,
         });
 
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
-        
-        
         var buyResult = await _sut.AddOrder(buyOrder, default);
         _book.BestBidsCount.Should().Be(1);
         _book.BidLevelsCount.Should().Be(1);
@@ -748,7 +432,6 @@ public sealed class MatchingEngineTests
         _book.BidLevelsCount.Should().Be(1);
         _book.BestAsksCount.Should().Be(0);
 
-        
         
         buyResult.FirstValue.IsFilled.Should().BeFalse();
         buyResult.FirstValue.IsMatched.Should().BeFalse();
@@ -763,20 +446,6 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task StopOrdersShouldBeTriggeredAfterATradeIsMade()
     {
-        var stopOrder = new StopOrder()
-        {
-            IsTriggered = false,
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(1),
-            OpenQuantity = 10,
-            StopPrice = 120,
-            FeeId = 1,
-            Type = TradeType.StopBuy,
-            Symbol = "APPL"
-        };
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
         {
@@ -785,81 +454,30 @@ public sealed class MatchingEngineTests
             TakerFee = 0.1m,
 
         });
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user-4",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(2),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user2",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(3),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var buyOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user-54",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(4),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 120,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(5),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 120,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder3 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user12",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(6),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 120,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
+        var stopOrder = OrderFactory.CreateBuyStopOrder(1,
+            10,
+            120,
+            _dateTimeProvider);
+        var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(2,
+            10,
+            100,
+            _dateTimeProvider);
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(3,
+            10,
+            100,
+            _dateTimeProvider);
+        var buyOrder2 = OrderFactory.CreateBuyMarketOrderWithQuantity(4,
+            10,
+            120,
+            _dateTimeProvider);
+        var sellOrder2 = OrderFactory.CreateSellMarketOrderWithQuantity(5,
+            10,
+            120,
+            _dateTimeProvider);
+        var sellOrder3 = OrderFactory.CreateSellMarketOrderWithQuantity(6,
+            10,
+            120,
+            _dateTimeProvider); 
 
 
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
@@ -869,9 +487,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
 
         var stopOrderResult = await _sut.AddOrder(stopOrder, default);
         _book.BestStopBidsCount.Should().Be(1);
@@ -894,118 +509,41 @@ public sealed class MatchingEngineTests
     [Fact]
     public async Task StopOrdersShouldBeTriggeredAfterATradeIsMadeAndNonMatchedTurnedIntoOpenOrders()
     {
-         var stopOrder = new StopOrder()
-        {
-            IsTriggered = false,
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(1),
-            OpenQuantity = 10,
-            StopPrice = 120,
-            FeeId = 1,
-            Type = TradeType.StopBuy,
-            Symbol = "APPL"
-        };
-         var stopOrder2 = new StopOrder()
-        {
-            IsTriggered = false,
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(5),
-            OpenQuantity = 5,
-            StopPrice = 120,
-            FeeId = 1,
-            Type = TradeType.StopBuy,
-            Symbol = "APPL"
-        };
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
         {
             Id = 1,
             MakerFee = 0.25m,
             TakerFee = 0.1m,
-
         });
-        var buyOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user-4",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(2),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user2",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(3),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 100,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var buyOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = true,
-            StockId = Guid.NewGuid(),
-            UserId = "user-54",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(4),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 120,
-            FeeId = 1,
-            Type = TradeType.BuyMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder2 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user3",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(5),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 120,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-        var sellOrder3 = new MarketOrder()
-        {
-            Id = Guid.NewGuid(),
-            IsBuy = false,
-            StockId = Guid.NewGuid(),
-            UserId = "user12",
-            Timestamp = _dateTimeProvider.Object.Now.AddMicroseconds(6),
-            OpenQuantity = 10,
-            OrderAmount = null,
-            Price = 120,
-            FeeId = 1,
-            Type = TradeType.SellMarket,
-            TradeCondition = TradeCondition.None,
-            Symbol = "APPL"
-        };
-
+        var stopOrder = OrderFactory.CreateBuyStopOrder(1,
+            10,
+            120,
+            _dateTimeProvider);
+         var stopOrder2 = OrderFactory.CreateBuyStopOrder(2,
+            5,
+            120,
+            _dateTimeProvider);
+         var buyOrder = OrderFactory.CreateBuyMarketOrderWithQuantity(3,
+            10,
+            100,
+            _dateTimeProvider);
+        var sellOrder = OrderFactory.CreateSellMarketOrderWithQuantity(4,
+            10,
+            100,
+            _dateTimeProvider);
+        var buyOrder2 = OrderFactory.CreateBuyMarketOrderWithQuantity(5,
+            10,
+            120,
+            _dateTimeProvider);
+        var sellOrder2 = OrderFactory.CreateSellMarketOrderWithQuantity(6,
+            10,
+            120,
+            _dateTimeProvider);
+        var sellOrder3 = OrderFactory.CreateSellMarketOrderWithQuantity(7,
+            10,
+            120,
+            _dateTimeProvider);
 
         _dateTimeProvider.Setup(x => x.Now).Returns(DateTimeOffset.UtcNow);
         _feeProvider.Setup(x => x.GetFeeAsync(1)).ReturnsAsync(new Fee()
@@ -1014,9 +552,6 @@ public sealed class MatchingEngineTests
             MakerFee = 0.25m,
             TakerFee = 0.1m,
         });
-
-        _tradeListener.Setup(x => x.OnTradeAsync(It.IsAny<TradeFootprint>(), default));
-        _tradeListener.Setup(x => x.OnAcceptAsync(It.IsAny<IOrder>(), default));
 
         var stopOrderResult = await _sut.AddOrder(stopOrder, default);
         _book.BestStopBidsCount.Should().Be(1);

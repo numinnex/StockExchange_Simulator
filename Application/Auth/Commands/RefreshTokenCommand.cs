@@ -7,7 +7,6 @@ namespace Application.Auth.Commands;
 
 public sealed record RefreshTokenCommand(string Token, string RefreshToken) : IRequest<AuthenticationResult>;
 
-//TODO - Look into refactoring AuthenticationResult into a Result<Authentication>
 
 public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, AuthenticationResult>
 {
