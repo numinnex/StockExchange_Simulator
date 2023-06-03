@@ -9,7 +9,7 @@ public sealed class MappingProfiles : Profile
 {
     public MappingProfiles()
     {
-        CreateMap<MarketOrder, MarketOrderResponse>().ReverseMap();
+        CreateMap<MarketOrder, MarketTradeResponse>().ReverseMap();
         CreateMap<Stock, StockResponse>()
             .ForPath(x => x.Price,
                 opt => opt.MapFrom(x => x.Price.Value))
@@ -18,6 +18,14 @@ public sealed class MappingProfiles : Profile
             .ReverseMap();
         CreateMap<StockSnapshot, StockSnapshotResponse>().ReverseMap();
         CreateMap<TimeSeries, TimeSeriesResponse>().ReverseMap();
+        CreateMap<MarketOrder, MarketOrderResponse>()
+            .ForPath(x => x.Price,
+                opt => opt.MapFrom(x => x.Price.Value))
+            .ForPath(x => x.OpenQuantity,
+                opt => opt.MapFrom(x => x.OpenQuantity.Value))
+            .ForPath(x => x.OrderAmount,
+                opt => opt.MapFrom(x => x.OrderAmount.Value))
+            .ReverseMap();
 
     }
 }

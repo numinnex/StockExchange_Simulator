@@ -14,7 +14,7 @@ public sealed class Stock : Entity
     public required decimal HighMonth { get; init; }
     public required decimal LowMonth { get; init; }
     public Change? Change { get; set; }
-    public double? TrendingScore { get; set; }
+    public double? TrendingScore { get; set;}
     public IEnumerable<MarketOrder>? MarketOrders { get; set; }
     public IEnumerable<StopOrder>? StopOrders { get; set; }
     public int? TimeSeriesId { get; set; }

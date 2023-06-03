@@ -11,7 +11,9 @@ using Infrastructure.Repository;
 using Infrastructure.StockService;
 using Infrastructure.TradeService;
 using Infrastructure.TwelveDataApi;
+using Infrastructure.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +48,15 @@ public static class ConfigureServices
         services.AddTransient<TwelveDataHeaderMiddleware>();
 
         services.AddScoped<IStockUtils, StockUtils>();
+        
+        services.AddScoped<IUriService>(provider =>
+        {
+            var accessor = provider.GetRequiredService<IHttpContextAccessor>();
+            var request = accessor.HttpContext!.Request;
+            var absoluteUri = $"{request.Scheme}://{request.Host.ToUriComponent()}{request.Path}";
+
+            return new UriService(absoluteUri);
+        });
 
         services.ConfigureOptions<TwelveDataApiOptionSetup>();
         services.ConfigureOptions<JwtSettingsOptionsSetup>();

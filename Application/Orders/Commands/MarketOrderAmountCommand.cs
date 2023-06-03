@@ -10,8 +10,8 @@ using MediatR;
 namespace Application.Orders.Commands;
 
 public sealed record MarketOrderAmountCommand(string StockId, decimal Amount, string UserId, bool IsBuy) 
-    :IRequest<Result<MarketOrderResponse>>;
-public sealed class MarketOrderAmountHandler : IRequestHandler<MarketOrderAmountCommand, Result<MarketOrderResponse>>
+    :IRequest<Result<MarketTradeResponse>>;
+public sealed class MarketOrderAmountHandler : IRequestHandler<MarketOrderAmountCommand, Result<MarketTradeResponse>>
 {
     private readonly IMatchingEngine _matchingEngine;
     private readonly IStockUtils _stockUtils;
@@ -26,7 +26,7 @@ public sealed class MarketOrderAmountHandler : IRequestHandler<MarketOrderAmount
         _dateTimeProvider = dateTimeProvider;
         _stockClient = stockClient;
     }
-    public async Task<Result<MarketOrderResponse>> Handle(MarketOrderAmountCommand request, CancellationToken cancellationToken)
+    public async Task<Result<MarketTradeResponse>> Handle(MarketOrderAmountCommand request, CancellationToken cancellationToken)
     {
         var stockSymbol = await _stockUtils.GetStockSymbolByStockId(Guid.Parse(request.StockId));
         var realTimePrice = await _stockClient.GetRealtimePrice(stockSymbol);
@@ -50,7 +50,7 @@ public sealed class MarketOrderAmountHandler : IRequestHandler<MarketOrderAmount
         };
         await _matchingEngine.AddOrder(order , cancellationToken);
 
-        return Result<MarketOrderResponse>.Success(new MarketOrderResponse
+        return Result<MarketTradeResponse>.Success(new MarketTradeResponse
         {
             StockId = request.StockId,
             Price = 12

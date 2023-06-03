@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Application.Common.Interfaces.Repository;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,6 +57,19 @@ public sealed class OrderRepository : IOrderRepository
         if (filter is not null)
             query = query.Where(filter);
         return await query.ToListAsync(token);
+    }
+
+    public async Task<List<MarketOrder>> GetPaginatedActiveMarketOrdersAsync(int pageNumber, int pageSize, CancellationToken token)
+    {
+        var query = _ctx.MarketOrders.Where(x => x.Status == TradeStatus.InQueue).AsQueryable();
+
+        int totalItems = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        int skip = (pageNumber - 1) * pageSize; 
+        
+        var marketTrades = await query.Skip(skip).Take(pageSize).ToListAsync();
+
+        return marketTrades;
     }
 
     public async Task Update(IOrder order, CancellationToken token)

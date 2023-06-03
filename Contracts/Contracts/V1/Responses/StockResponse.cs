@@ -13,6 +13,6 @@ public sealed class StockResponse
     public required decimal LowMonth { get; init; }
     public required double Change { get; init; }
     public double? TrendingScore { get; init; }
-    public IList<MarketOrderResponse>? MarketOrderResponses { get; init; }
+    public IList<MarketTradeResponse>? MarketOrderResponses { get; init; }
     public TimeSeriesResponse? TimeSeries { get; init; }
 }

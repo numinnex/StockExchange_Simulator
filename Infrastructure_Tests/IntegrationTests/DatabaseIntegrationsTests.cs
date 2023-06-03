@@ -14,7 +14,6 @@ public sealed class DatabaseIntegrationsTests : IAsyncLifetime
 {
     private readonly Func<Task> _resetDatabase;
     
-    //TODO - Add more tests and split it into multiple files
     private readonly ApplicationDbContext _ctx;
     private readonly IOrderRepository _orderRepository;
     private readonly IStockRepository _stockRepository;
