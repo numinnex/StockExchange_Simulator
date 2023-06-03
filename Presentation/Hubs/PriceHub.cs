@@ -11,6 +11,7 @@ public sealed class PriceHub : Hub
     {
         _stockClient = stockClient;
     }
+    //the symbol could be passed throught request header.
     public async Task<decimal> RealtimePrice(string symbol)
     {
         var price = await _stockClient.GetRealtimePrice(symbol);

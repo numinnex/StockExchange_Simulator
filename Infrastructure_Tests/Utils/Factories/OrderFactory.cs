@@ -9,7 +9,7 @@ namespace Infrastructure_Tests.Utils.Factories;
 
 public static class OrderFactory
 {
-    public static MarketOrder CreateBuyMarketOrderWithQuantity(int idx, decimal quantity, decimal price,Mock<IDateTimeProvider> dateTimeProvider)
+    public static MarketOrder CreateBuyMarketOrderWithQuantity(int idx, decimal quantity, decimal price,Mock<IDateTimeProvider> dateTimeProvider )
     {
         return new MarketOrder()
         {
@@ -17,7 +17,7 @@ public static class OrderFactory
             IsBuy = true,
             StockId = OrderConstants.StockId,
             UserId = OrderConstants.UserIdFromIndex(idx),
-            Timestamp = dateTimeProvider.Object.Now.AddMicroseconds(idx),
+            Timestamp = dateTimeProvider.Object.Now.AddMicroseconds(idx) ,
             OpenQuantity = quantity,
             OrderAmount = null,
             Price = price,

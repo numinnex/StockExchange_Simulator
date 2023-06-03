@@ -15,6 +15,7 @@ public sealed class ValidationBehaviorTest
     private GetStockQueryValidator _validator;
     private MarketOrderAmountCommandValidation _orderAmountValidator;
     private MarketOrderQuantityCommandValidation _orderQuantityValidator;
+    private StopOrderQuantityCommandValidation _stopOrderQuantityValidator;
     private IStockUtils _stockUtils;
     private IIdentityService _identityService;
     public ValidationBehaviorTest()
@@ -25,9 +26,9 @@ public sealed class ValidationBehaviorTest
         _identityService = A.Fake<IIdentityService>();
         _orderAmountValidator = new MarketOrderAmountCommandValidation(_stockUtils , _identityService);
         _orderQuantityValidator = new MarketOrderQuantityCommandValidation(_stockUtils , _identityService);
+        _stopOrderQuantityValidator = new StopOrderQuantityCommandValidation(_stockUtils , _identityService);
         
     }
-
     [Fact]
     public async Task ShouldHaveErrorsWhenSymbolIsEmpty()
     {
@@ -52,7 +53,14 @@ public sealed class ValidationBehaviorTest
 
         result.ShouldHaveValidationErrorFor(query => query.Symbol);
     }
+    [Fact]
+    public async Task ShouldHaveErrorsWhenStopOrderQuantityIsLowerThanZero()
+    {
+        var query = new StopOrderQuantityCommand("test" , -2 , 120 , "test" , true);
+        var result = await _stopOrderQuantityValidator.TestValidateAsync(query);
 
+        result.ShouldHaveValidationErrorFor(query => query.Quantity);
+    }
     [Fact]
     public async Task ShouldHaveErrorsWhenMarketOrderQuantityIsLowerThanZero()
     {
@@ -61,7 +69,14 @@ public sealed class ValidationBehaviorTest
 
         result.ShouldHaveValidationErrorFor(query => query.Quantity);
     }
-    //Create test for MarketOrderAmountCommand when guid is not valid
+    [Fact]
+    public async Task ShouldHaveErrorsWhenStopOrderStopPriceIsLowerThanZero()
+    {
+        var query = new StopOrderQuantityCommand("test" , 12 , -2 , "test" , true);
+        var result = await _stopOrderQuantityValidator.TestValidateAsync(query);
+
+        result.ShouldHaveValidationErrorFor(query => query.StopPrice);
+    }
     [Fact]
     public async Task ShouldHaveErrorsWhenMarketOrderQuantityGuidIsNotValid()
     {
@@ -79,7 +94,6 @@ public sealed class ValidationBehaviorTest
 
         result.ShouldHaveValidationErrorFor(query => query.Amount);
     }
-    //Create test for MarketOrderAmountCommand when guid is not valid
     [Fact]
     public async Task ShouldHaveErrorsWhenMarketOrderAmountGuidIsNotValid()
     {

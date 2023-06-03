@@ -24,6 +24,7 @@ public static class Routes
     public static class Order
     {
         public const string OrderMarketQuantity = Base + "/order/ordermarketquantity";
+        public const string StopOrderQuantity = Base + "/order/stoporderquantity";
         public const string OrderMarketAmount = Base + "/order/ordermarketamount";
     }
 }

@@ -2,6 +2,7 @@ namespace Contracts.V1.Responses;
 
 public sealed class StockResponse
 {
+    public required string Id { get; init; }
     public required string Symbol { get; init; }
     public required string Name { get; init; }
     public required double Price { get; init; }

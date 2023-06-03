@@ -16,4 +16,9 @@ public sealed class FeeRepository : Repository<Fee>,IFeeRepository
     {
         return await _ctx.Fees.FindAsync(id ) is not null;
     }
+
+    public async Task SaveChangesAsync(CancellationToken token)
+    {
+        await _ctx.SaveChangesAsync(token);
+    }
 }

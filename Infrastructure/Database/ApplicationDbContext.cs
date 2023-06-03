@@ -19,6 +19,11 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         _auditableEntitySaveChangesInterceptor = auditableEntitySaveChangesInterceptor;
     }
 
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) :base(options)
+    {
+        
+    }
+
     public DbSet<Stock> Stocks => Set<Stock>();
     public DbSet<Fee> Fees => Set<Fee>();
     public DbSet<Portfolio> Portfolios => Set<Portfolio>();

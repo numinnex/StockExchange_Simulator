@@ -18,8 +18,6 @@ public sealed class StockClient : IStockClient
         _client = client;
         _cache = cache;
     }
-
-
     public async Task<List<SymbolLookupResponse>> SymbolLookupAsync(string symbol)
     {
         var response = await _client.GetFromJsonAsync<SymbolLookupApiResponse>(
@@ -39,20 +37,17 @@ public sealed class StockClient : IStockClient
         }
         return Enumerable.Empty<SymbolLookupResponse>().ToList();
     }
-
+    
     public async Task<List<Stock>> GetStocksBySymbolAsync(string name )
     {
         var stocksResponse = await _client
             .GetFromJsonAsync<StockApiResponse>($"stocks?country=United%20States&exchange=NASDAQ&symbol={name}&format=json");
-
-        //minmax?symbol=AAPL&interval=1month&time_period=30&format=json&outputsize=1&series_type=high
-
-
+        
         if (stocksResponse!.Data.Any())
         {
             var openHiLow = await _client
                 .GetFromJsonAsync<StockHiLoResponse>(
-                    $"minmax?symbol={name}&interval=1month&time_period=30&format=json&outputsize=1&series_type=open");
+                    $"minmax?symbol={name}&interval=1day&time_period=31&format=json&outputsize=1&series_type=open");
         
             var stockPriceResponse = await _client.GetAsync($"price?symbol={name}&format=json");
             var stocksTimeSeriesResponse =
@@ -105,6 +100,7 @@ public sealed class StockClient : IStockClient
     {
         var newStock = new Stock
         {
+            Id = Guid.NewGuid(),
             Volume = 0,
             HighMonth = openHiLo.values.First().max,
             LowMonth = openHiLo.values.First().min,

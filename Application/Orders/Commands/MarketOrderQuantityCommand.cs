@@ -53,7 +53,7 @@ public sealed class MarketOrderQuantityHandler : IRequestHandler<MarketOrderQuan
         return Result<MarketOrderResponse>.Success(new MarketOrderResponse
         {
             StockId = request.StockId,
-            Price = 12
+            Price = decimal.Multiply(request.Quantity , realTimePrice) 
         });
     }
 }
