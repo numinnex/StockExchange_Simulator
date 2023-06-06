@@ -53,10 +53,8 @@ public class OrderController : ControllerBase
     [HttpPost(Routes.Order.PlaceMarketOrderWithAmount)]
     public async Task<IActionResult> OrderMarketAmount([FromBody] OrderMarketAmountTradeRequest request, CancellationToken token)
     {
-
         var response = await _mediator.Send(new MarketOrderAmountCommand(request.StockId, request.Amount
             , request.UserId, request.IsBuy), token);
-
         if (response.IsSuccess)
         {
             return Ok(response.Value);
@@ -67,10 +65,10 @@ public class OrderController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetAllActiveTrades([FromQuery]int  pageNumber, [FromQuery] int pageSize)
     {
-        var response = await _mediator.Send(new GetActiveMarketOrdersQuery(pageNumber, pageSize));
+        var response = await _mediator.Send(new GetActiveMarketOrdersQuery(pageSize, pageNumber));
         if (response.IsSuccess)
         {
-            var paginatedResponse = PaginationUtils.CreatePaginatedResponse(_uriService, pageNumber, pageSize, response.Value);
+            var paginatedResponse = PaginationUtils.CreatePaginatedResponse(_uriService, pageSize, pageNumber, response.Value);
             return Ok(paginatedResponse);
         }
 

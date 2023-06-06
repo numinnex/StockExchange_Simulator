@@ -25,8 +25,10 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Stock> Stocks => Set<Stock>();
+    public DbSet<Security> Securities => Set<Security>();
     public DbSet<Fee> Fees => Set<Fee>();
     public DbSet<Portfolio> Portfolios => Set<Portfolio>();
+    public DbSet<ValueSnapshot> ValueSnapshots => Set<ValueSnapshot>();
     public DbSet<MarketOrder> MarketOrders => Set<MarketOrder>();
     public DbSet<StopOrder> StopOrders => Set<StopOrder>();
     public DbSet<StockSnapshot> StockSnapshots => Set<StockSnapshot>();
@@ -41,7 +43,6 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(builder);
     }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         //TODO - Uncomment after fixing auditableEntitySaveChangesInterceptor
@@ -50,6 +51,21 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 }
 
+file sealed class SecurityTableConfiguration : IEntityTypeConfiguration<Security>
+{
+    public void Configure(EntityTypeBuilder<Security> builder)
+    {
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.SecurityCollection)
+            .HasForeignKey(x => x.UserId);
+                
+        builder.HasOne(x => x.Stock)
+            .WithOne(x => x.Security)
+            .HasForeignKey<Security>(x => x.StockId);
+        builder.OwnsOne(x => x.Quantity, a => a.Property(
+                x => x.Value).HasColumnType("decimal(18,2)"));
+    }
+}
 file sealed class StopOrderTableConfiguration : IEntityTypeConfiguration<StopOrder>
 {
     public void Configure(EntityTypeBuilder<StopOrder> builder)
@@ -70,8 +86,6 @@ file sealed class StopOrderTableConfiguration : IEntityTypeConfiguration<StopOrd
 
         builder.HasOne(x => x.User).WithMany(x => x.StopOrders)
             .HasForeignKey(x => x.UserId);
-        
-        
     }
 }
 
@@ -87,7 +101,6 @@ file sealed class TradeFootprintTableConfiguration : IEntityTypeConfiguration<Tr
             .HasMaxLength(100);
         builder.Property(x => x.RestingOrderUserId)
             .HasMaxLength(100);
-        
     }
 }
 
@@ -162,11 +175,18 @@ file sealed class PortfolioTableConfiguration : IEntityTypeConfiguration<Portfol
 {
     public void Configure(EntityTypeBuilder<Portfolio> builder)
     {
-        builder.Property(x => x.Name)
-            .HasMaxLength(300)
-            .IsRequired();
         builder.Property(x => x.TotalValue).HasColumnType("money");
-        builder.OwnsMany(x => x.Positions);
+        builder.HasOne(x => x.User).WithOne(x => x.Portfolio);
+    }
+}
+
+file sealed class ValueSnapshotTableConfiguration : IEntityTypeConfiguration<ValueSnapshot>
+{
+    public void Configure(EntityTypeBuilder<ValueSnapshot> builder)
+    {
+        builder.Property(x => x.Value).HasColumnType("money");
+        builder.HasOne(x => x.Portfolio)
+            .WithMany(x => x.ValueSnapshots);
     }
 }
 file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<MarketOrder>
@@ -205,12 +225,12 @@ file sealed class FeeTableConfiguration : IEntityTypeConfiguration<Fee>
         builder.Property(x => x.TakerFee).HasPrecision(18, 2);
     }
 }
-
 file sealed class IdentityTableConfiguration : IEntityTypeConfiguration<ApplicationUser>
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
-        builder.HasMany(x => x.Portfolios)
-            .WithOne(x => x.User);
+        builder.HasOne(x => x.Portfolio)
+            .WithOne(x => x.User)
+            .HasForeignKey<Portfolio>(x => x.UserId);
     }
 }

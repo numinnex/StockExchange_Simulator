@@ -3,6 +3,7 @@ using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repository;
 using Domain.Identity;
 using Infrastructure.AuthService;
+using Infrastructure.BackgroundWorkers;
 using Infrastructure.Database;
 using Infrastructure.Database.Interceptors;
 using Infrastructure.DateTimeService;
@@ -35,11 +36,14 @@ public static class ConfigureServices
         
         services.AddSingleton<IStockClient, StockClient>();
         services.AddSingleton<IMatchingEngine, MatchingEngine.MatchingEngine>();
+
+        services.AddHostedService<AccountValueSnapshotWorker>();
         
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IFeeRepository, FeeRepository>();
+        services.AddScoped<IPortfolioRepository, PortfolioRepository>();
         
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
         services.AddScoped<ITradeListener, TradeListener>();

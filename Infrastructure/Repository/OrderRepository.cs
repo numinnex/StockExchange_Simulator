@@ -21,7 +21,6 @@ public sealed class OrderRepository : IOrderRepository
     }
     public async Task AddAsync(IOrder order, CancellationToken token)
     {
-
         await using var transaction = await _ctx.Database.BeginTransactionAsync(token);
         try
         {
@@ -68,7 +67,6 @@ public sealed class OrderRepository : IOrderRepository
         int skip = (pageNumber - 1) * pageSize; 
         
         var marketTrades = await query.Skip(skip).Take(pageSize).ToListAsync();
-
         return marketTrades;
     }
 

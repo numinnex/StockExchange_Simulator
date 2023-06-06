@@ -19,4 +19,5 @@ public sealed class Stock : Entity
     public IEnumerable<StopOrder>? StopOrders { get; set; }
     public int? TimeSeriesId { get; set; }
     public TimeSeries? TimeSeries { get; set; }
+    public Security? Security { get; init; }
 }

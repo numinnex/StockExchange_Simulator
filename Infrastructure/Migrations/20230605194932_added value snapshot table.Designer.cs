@@ -4,6 +4,7 @@ using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230605194932_added value snapshot table")]
+    partial class addedvaluesnapshottable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,31 +125,6 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Portfolios", "db_stock");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Security", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("StockId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StockId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Securities", "db_stock");
                 });
 
             modelBuilder.Entity("Domain.Entities.Stock", b =>
@@ -730,48 +708,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Portfolio", b =>
                 {
                     b.HasOne("Domain.Identity.ApplicationUser", "User")
-                        .WithOne("Portfolio")
+                        .WithOne("Porfolio")
                         .HasForeignKey("Domain.Entities.Portfolio", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Security", b =>
-                {
-                    b.HasOne("Domain.Entities.Stock", "Stock")
-                        .WithOne("Security")
-                        .HasForeignKey("Domain.Entities.Security", "StockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Identity.ApplicationUser", "User")
-                        .WithMany("SecurityCollection")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("Quantity", "Quantity", b1 =>
-                        {
-                            b1.Property<int>("SecurityId")
-                                .HasColumnType("int");
-
-                            b1.Property<decimal>("Value")
-                                .HasColumnType("decimal(18,2)");
-
-                            b1.HasKey("SecurityId");
-
-                            b1.ToTable("Securities", "db_stock");
-
-                            b1.WithOwner()
-                                .HasForeignKey("SecurityId");
-                        });
-
-                    b.Navigation("Quantity")
-                        .IsRequired();
-
-                    b.Navigation("Stock");
 
                     b.Navigation("User");
                 });
@@ -1126,8 +1066,6 @@ namespace Infrastructure.Migrations
                 {
                     b.Navigation("MarketOrders");
 
-                    b.Navigation("Security");
-
                     b.Navigation("StopOrders");
                 });
 
@@ -1142,10 +1080,8 @@ namespace Infrastructure.Migrations
                 {
                     b.Navigation("MarketOrders");
 
-                    b.Navigation("Portfolio")
+                    b.Navigation("Porfolio")
                         .IsRequired();
-
-                    b.Navigation("SecurityCollection");
 
                     b.Navigation("StopOrders");
                 });

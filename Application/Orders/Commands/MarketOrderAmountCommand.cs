@@ -17,20 +17,22 @@ public sealed class MarketOrderAmountHandler : IRequestHandler<MarketOrderAmount
     private readonly IStockUtils _stockUtils;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IStockClient _stockClient;
+    private readonly IPortfolioRepository _portfolioRepository;
 
     public MarketOrderAmountHandler(IMatchingEngine matchingEngine, IStockUtils stockUtils,
-        IDateTimeProvider dateTimeProvider, IStockClient stockClient)
+        IDateTimeProvider dateTimeProvider, IStockClient stockClient, IPortfolioRepository portfolioRepository)
     {
         _matchingEngine = matchingEngine;
         _stockUtils = stockUtils;
         _dateTimeProvider = dateTimeProvider;
         _stockClient = stockClient;
+        _portfolioRepository = portfolioRepository;
     }
     public async Task<Result<MarketTradeResponse>> Handle(MarketOrderAmountCommand request, CancellationToken cancellationToken)
     {
         var stockSymbol = await _stockUtils.GetStockSymbolByStockId(Guid.Parse(request.StockId));
         var realTimePrice = await _stockClient.GetRealtimePrice(stockSymbol);
-        
+
         var order = new MarketOrder()
         {
             Id = new Guid() ,
