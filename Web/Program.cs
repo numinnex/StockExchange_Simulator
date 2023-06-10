@@ -20,6 +20,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+/*
 Console.WriteLine("---------HELLO-------------");
 Console.WriteLine("---------HELLO-------------");
 Console.WriteLine("---------HELLO-------------");
@@ -31,6 +32,9 @@ Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection")
 Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
 Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
 
+Console.WriteLine(builder.Configuration.GetSection("TwelveDataApiOptions")["Key"]);
+Console.WriteLine(builder.Configuration.GetSection("TwelveDataApiOptions")["Host"]);
+*/
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(x =>

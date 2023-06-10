@@ -28,7 +28,11 @@ COPY --from=publish /app/appsettings.json appsettings.json
 
 # Set the default connection string as an environment variable
 ARG DEFAULT_CONNECTION_STRING
+ARG TWELVEDATA_KEY
+ARG TWELVEDATA_HOST
 ENV DefaultConnectionString=$DEFAULT_CONNECTION_STRING
+ENV TwelvedataKey=$TWELVEDATA_KEY
+ENV TwelvedataHost=$TWELVEDATA_HOST
 
 # Run the script to replace the placeholder with the environment variable value
 COPY env-config.sh /app/env-config.sh
