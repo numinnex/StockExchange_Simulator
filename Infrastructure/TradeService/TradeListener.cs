@@ -12,7 +12,6 @@ public sealed class TradeListener : ITradeListener
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ILogger<TradeListener> _logger;
     private readonly IPortfolioRepository _portfolioRepository;
-
     public TradeListener(ITradeRepository tradeRepository, IOrderRepository orderRepository,
         IDateTimeProvider dateTimeProvider, ILogger<TradeListener> logger, IPortfolioRepository portfolioRepository)
     {
@@ -26,31 +25,34 @@ public sealed class TradeListener : ITradeListener
     {
         await _tradeRepository.AddTradeFootprintAsync(tradeFootprint, token);
         await _tradeRepository.SaveChangesAsync(token);
+        //this is bad, this whole logic should be encapsulated in some sort of service
         if (tradeFootprint.ProcessedOrderIsBuy)
         {
-            var boughtSecurity = new Security()
+            var boughtSecurity = new Security
             {
                 Quantity = tradeFootprint.Quantity,
                 StockId = tradeFootprint.ProcessedOrderId,
                 UserId = tradeFootprint.ProcessedOrderUserId,
+                PurchasedPrice = tradeFootprint.MatchPrice,
             };
-            var buyerSecurity = await _portfolioRepository.GetSecurityByUserIdAndStockId(tradeFootprint.ProcessedOrderId.ToString(), tradeFootprint.ProcessedOrderUserId, token);
-            if (buyerSecurity is not null)
-            {
-                buyerSecurity.Quantity += tradeFootprint.Quantity;
-                _portfolioRepository.UpdateSecurity(buyerSecurity );
-                await _portfolioRepository.SaveChangesAsync(token);
-            }
-            else
-            {
-                await _portfolioRepository.AddSecurityAsync(boughtSecurity, token);
-                await _portfolioRepository.SaveChangesAsync(token);
-            }
+            var buyerPortfolio =
+                await _portfolioRepository.GetByUserIdAsync(tradeFootprint.ProcessedOrderUserId, token);
+            var sellerPortfolio = await _portfolioRepository.GetByUserIdAsync(tradeFootprint.RestingOrderUserId, token);
+
+            await _portfolioRepository.AddSecurityAsync(boughtSecurity, token);
+            await _portfolioRepository.SaveChangesAsync(token);
+
+            buyerPortfolio!.TotalValue += tradeFootprint.TradeDetails.BidCost;
+            sellerPortfolio!.TotalValue -= tradeFootprint.TradeDetails.BidCost;
+            _portfolioRepository.UpdatePortfolio(buyerPortfolio);
+            _portfolioRepository.UpdatePortfolio(sellerPortfolio);
+            await _portfolioRepository.SaveChangesAsync(token);
+
             var sellerSecurity = await _portfolioRepository.GetSecurityByUserIdAndStockId(
                 tradeFootprint.RestingOrderId.ToString(), tradeFootprint.RestingOrderUserId, token);
-            
+
             sellerSecurity!.Quantity -= tradeFootprint.Quantity;
-            if (sellerSecurity.Quantity <= 0)
+            if (sellerSecurity.Quantity == 0)
             {
                 _portfolioRepository.RemoveSecurity(sellerSecurity);
                 await _portfolioRepository.SaveChangesAsync(token);
@@ -63,8 +65,11 @@ public sealed class TradeListener : ITradeListener
         }
         else
         {
-           var sellerSecurity = await _portfolioRepository.GetSecurityByUserIdAndStockId(
-               tradeFootprint.RestingOrderId.ToString(), tradeFootprint.RestingOrderUserId, token);
+            var sellerSecurity = await _portfolioRepository.GetSecurityByUserIdAndStockId(
+                tradeFootprint.RestingOrderId.ToString(), tradeFootprint.RestingOrderUserId, token);
+            var buyerPortfolio =
+                await _portfolioRepository.GetByUserIdAsync(tradeFootprint.ProcessedOrderUserId, token);
+            var sellerPortfolio = await _portfolioRepository.GetByUserIdAsync(tradeFootprint.RestingOrderUserId, token);
             sellerSecurity!.Quantity -= tradeFootprint.Quantity;
             if (sellerSecurity.Quantity <= 0)
             {
@@ -74,27 +79,23 @@ public sealed class TradeListener : ITradeListener
             {
                 _portfolioRepository.UpdateSecurity(sellerSecurity);
             }
-            var boughtSecurity = await _portfolioRepository.GetSecurityByUserIdAndStockId(
-                tradeFootprint.ProcessedOrderId.ToString(), tradeFootprint.ProcessedOrderUserId, token);
-            
-            if (boughtSecurity is not null)
+
+            buyerPortfolio!.TotalValue += tradeFootprint.TradeDetails.BidCost;
+            sellerPortfolio!.TotalValue -= tradeFootprint.TradeDetails.BidCost;
+            _portfolioRepository.UpdatePortfolio(buyerPortfolio);
+            _portfolioRepository.UpdatePortfolio(sellerPortfolio);
+            await _portfolioRepository.SaveChangesAsync(token);
+
+            var boughtSecurity = new Security
             {
-                boughtSecurity.Quantity += tradeFootprint.Quantity;
-                _portfolioRepository.UpdateSecurity(boughtSecurity);
-                await _portfolioRepository.SaveChangesAsync(token);
-            }
-            else
-            {
-                boughtSecurity = new Security()
-                {
-                    Quantity = tradeFootprint.Quantity,
-                    StockId = tradeFootprint.ProcessedOrderId,
-                    UserId = tradeFootprint.ProcessedOrderUserId,
-                };
-                await _portfolioRepository.AddSecurityAsync(boughtSecurity, token);
-                await _portfolioRepository.SaveChangesAsync(token);
-            }
+                Quantity = tradeFootprint.Quantity,
+                StockId = tradeFootprint.ProcessedOrderId,
+                UserId = tradeFootprint.ProcessedOrderUserId,
+            };
+            await _portfolioRepository.AddSecurityAsync(boughtSecurity, token);
+            await _portfolioRepository.SaveChangesAsync(token);
         }
+        
         _logger.LogInformation("A trade has been made at {DateTime}, between {processedUserId} and {restingUserId}.Processed Order ID:{processedOrder}, Resting Order ID:{restingOrder}.Traded {quantity} quantity for {price}.",
             _dateTimeProvider.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             tradeFootprint.ProcessedOrderUserId,

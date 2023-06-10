@@ -13,6 +13,12 @@ public static class Routes
         public const string SymbolLookup = Base + "/stock/lookup";
         public const string GetRealtimePrice = Base + "/stock/price/{symbol}";
     }
+
+    public static class Portfolio
+    {
+        public const string GetUserPortfolio = Base + "/portfolio/{userId}";
+        public const string GetUserSecurities = Base + "/portfolio/securities/{userId}";
+    }
     public static class Identity
     {
         public const string Login = Base + "/identity/login";
@@ -20,7 +26,6 @@ public static class Routes
         public const string Refresh = Base + "/identity/refresh";
         public const string Identify = Base + "/identity/identify";
     }
-
     public static class Order
     {
         public const string PlaceMarketOrderWithQuantity = Base + "/order/market/quantity";

@@ -8,29 +8,23 @@ namespace Infrastructure.Repository;
 public sealed class PortfolioRepository : Repository<Portfolio>, IPortfolioRepository
 {
     private readonly ApplicationDbContext _ctx;
-
     public PortfolioRepository(ApplicationDbContext ctx) : base(ctx)
     {
         _ctx = ctx;
     }
-
+    public async Task<Portfolio?> GetByUserIdAsync(string userId, CancellationToken token)
+    {
+        return await _ctx.Portfolios.Include(x => x.ValueSnapshots).FirstOrDefaultAsync(x => x.UserId == userId, token);
+    }
     public void RemoveSecurity(Security security)
     {
         _ctx.Securities.Remove(security);
     }
-
-    public async Task<List<Security>> GetAllUserSecuritiesAsync(string userId, CancellationToken token)
-    {
-        var result = await _ctx.Securities.Where(x => x.UserId == userId).ToListAsync(token);
-        return result;
-    }
-
     public async Task<List<Security>> GetSecuritiesByUserIdAsync(string userId, CancellationToken token)
     {
         var result = await _ctx.Securities.Where(x => x.UserId == userId).ToListAsync(cancellationToken: token);
         return result;
     }
-
     public async Task<Security?> GetSecurityByUserIdAndStockId(string stockId, string userId, CancellationToken token)
     {
         return await _ctx.Securities.FirstOrDefaultAsync(x => x.UserId == userId && x.StockId == Guid.Parse(stockId ), token);
@@ -40,17 +34,25 @@ public sealed class PortfolioRepository : Repository<Portfolio>, IPortfolioRepos
     {
         await _ctx.Securities.AddAsync(security, token);
     }
+    public async Task AddValueSnapshots(List<ValueSnapshot> values, CancellationToken token)
+    {
+        await _ctx.ValueSnapshots.AddRangeAsync(values, token);
+    }
 
     public void UpdateSecurity(Security security )
     {
-        _ctx.Securities.Update(security );
+        _ctx.Securities.Update(security);
+    }
+
+    public void UpdatePortfolio(Portfolio portfolio)
+    {
+        _ctx.Portfolios.Update(portfolio);
     }
 
     public async Task<List<Portfolio>> GetAllAsync(CancellationToken token)
     {
         return await _ctx.Portfolios.ToListAsync(token);
     }
-
     public async Task SaveChangesAsync(CancellationToken token)
     {
         bool saveFailed;

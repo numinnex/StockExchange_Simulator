@@ -10,6 +10,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Application.Common.Interfaces.Repository;
+using Domain.Entities;
 
 namespace Infrastructure.AuthService;
 
@@ -20,15 +22,19 @@ public sealed class IdentityService :  IIdentityService
     private readonly TokenValidationParameters _tokenValidationParameters;
     private readonly ApplicationDbContext _ctx;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IPortfolioRepository _portfolioRepository;
 
-    public IdentityService(UserManager<ApplicationUser> userManager , IOptions<JwtSettingsOptions> jwtSettings , TokenValidationParameters 
-        tokenValidationParameters , ApplicationDbContext ctx, RoleManager<IdentityRole> roleManager )
+    public IdentityService(UserManager<ApplicationUser> userManager, IOptions<JwtSettingsOptions> jwtSettings,
+        TokenValidationParameters 
+        tokenValidationParameters , ApplicationDbContext ctx, RoleManager<IdentityRole> roleManager,
+        IPortfolioRepository portfolioRepository)
     {
         _userManager = userManager;
         _jwtSettings = jwtSettings;
         _tokenValidationParameters = tokenValidationParameters;
         _ctx = ctx;
         _roleManager = roleManager;
+        _portfolioRepository = portfolioRepository;
     }
     
     public async Task<AuthenticationResult> RegisterAsync(string requestEmail, string requestPassword)
@@ -60,6 +66,25 @@ public sealed class IdentityService :  IIdentityService
                 Success = false
             };
         }
+        var portfolio = new Portfolio()
+        {
+            UserId = newUser.Id,
+            User = newUser,
+            TotalValue = 100000,
+        };
+        var valueSnapshot = new List<ValueSnapshot>();
+        valueSnapshot.Add(
+            new ValueSnapshot
+            {
+                Portfolio = portfolio,
+                Timestamp = DateTimeOffset.UtcNow,
+                Value = portfolio.TotalValue,
+            });
+            
+        await _portfolioRepository.AddAsync(portfolio, default);
+        await _portfolioRepository.AddValueSnapshots(valueSnapshot ,default);
+        await _portfolioRepository.SaveChangesAsync(default);
+        
         await _userManager.AddToRoleAsync(newUser, "User");
         return await GenerateAuthenticationResultForUserAsync(newUser);
 

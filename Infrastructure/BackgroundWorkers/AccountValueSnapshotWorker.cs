@@ -34,24 +34,25 @@ public sealed class AccountValueSnapshotWorker : BackgroundService
             }
         }
     }
-    private async Task TakeSnapshotAsync(IPortfolioRepository portfolioRepository,CancellationToken token)
+    private static async Task TakeSnapshotAsync(IPortfolioRepository portfolioRepository,CancellationToken token)
     {
         var portfolios = await portfolioRepository.GetAllAsync(token); // Get all portfolios from the repository
         if (portfolios.Count == 0)
             return;
-
+        var valueSnapshots = new List<ValueSnapshot>();
         foreach (var portfolio in portfolios)
         {
             decimal totalValueSnapshot = portfolio.TotalValue; // Take a snapshot of the TotalValue field
             var snapshot = new ValueSnapshot
             {
+                Portfolio = portfolio,
                 Timestamp = DateTimeOffset.UtcNow,
                 Value = totalValueSnapshot
             };
-
-            portfolio.ValueSnapshots.Add(snapshot);
+            
+            valueSnapshots.Add(snapshot);
         }
-
-        await portfolioRepository.SaveChangesAsync(token); 
+        await portfolioRepository.AddValueSnapshots(valueSnapshots , token);
+        await portfolioRepository.SaveChangesAsync(token);
     }
 }

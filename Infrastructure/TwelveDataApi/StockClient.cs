@@ -12,7 +12,6 @@ public sealed class StockClient : IStockClient
 {
     private readonly HttpClient _client;
     private readonly IMemoryCache _cache;
-
     public StockClient(HttpClient client, IMemoryCache cache)
     {
         _client = client;
@@ -60,7 +59,7 @@ public sealed class StockClient : IStockClient
                 price = 0.00m;
             }
 
-            price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
+            price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.price;
 
             var stocksResult = new List<Stock>();
 
@@ -86,7 +85,7 @@ public sealed class StockClient : IStockClient
         var stockPriceResponse = await _client.GetAsync($"price?symbol={symbol}&format=json");
         if (stockPriceResponse.IsSuccessStatusCode)
         {
-            var price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.Price;
+            var price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.price;
             _cache.Set(symbol, price, new MemoryCacheEntryOptions()
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)

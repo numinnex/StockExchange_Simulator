@@ -392,43 +392,30 @@ public class MatchingEngine : IMatchingEngine
         bool isIncommingOrderFilled)
     {
         Quantity? askRemainingQuantity = null;
-        Amount? askFee = null;
-        Amount? bidFee = null;
-        Amount? bidCost = null;
+        Amount? askFee;
+        Amount? bidFee;
+        Amount? bidCost;
 
         if (incommingMarketOrder.IsBuy)
         {
-            if (isIncommingOrderFilled)
-            {
-                bidCost = incommingMarketOrder.Cost;
-                bidFee = incommingMarketOrder.FeeAmount;
-            }
+            bidCost = incommingMarketOrder.Cost;
+            bidFee = incommingMarketOrder.FeeAmount;
+            askFee = restingMarketOrder.FeeAmount;
             
-            switch (isRestingOrderFilled)
+            if (!isRestingOrderFilled)
             {
-                case true:
-                    askFee = restingMarketOrder.FeeAmount;
-                    break;
-                case false:
-                    askRemainingQuantity = restingMarketOrder.OpenQuantity;
-                    break;
+                askRemainingQuantity = restingMarketOrder.OpenQuantity;
             }
         }
         else
         {
-            if (isRestingOrderFilled)
+            bidCost = restingMarketOrder.Cost;
+            bidFee = restingMarketOrder.FeeAmount;
+            askFee = incommingMarketOrder.FeeAmount;
+            
+            if (!isIncommingOrderFilled)
             {
-                bidCost = restingMarketOrder.Cost;
-                bidFee = restingMarketOrder.FeeAmount;
-            }
-            switch (isIncommingOrderFilled)
-            {
-                case true:
-                    askFee = incommingMarketOrder.FeeAmount;
-                    break;
-                case false:
-                    askRemainingQuantity = incommingMarketOrder.OpenQuantity;
-                    break;
+                askRemainingQuantity = incommingMarketOrder.OpenQuantity;
             }
         }
         return new TradeFootprint

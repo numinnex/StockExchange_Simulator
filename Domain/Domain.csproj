@@ -16,8 +16,4 @@
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.3" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\PriorityQueue\PriorityQueue.csproj" />
-    </ItemGroup>
-
 </Project>

@@ -1,9 +1,10 @@
 using Application;
 using Infrastructure;
 using Infrastructure.Database;
+using Infrastructure.Hubs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Presentation.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,10 +16,20 @@ var presentationAssembly = typeof(Presentation.AssemblyReference).Assembly;
 
 builder.Services.AddControllers()
     .AddApplicationPart(presentationAssembly);
-builder.Services.AddSignalR();
+//builder.Services.AddSignalR();
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+Console.WriteLine("---------HELLO-------------");
+Console.WriteLine("---------HELLO-------------");
+Console.WriteLine("---------HELLO-------------");
+Console.WriteLine("---------HELLO-------------");
+Console.WriteLine("---------HELLO-------------");
+Console.WriteLine("---------HELLO-------------");
+Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
+Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
+Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
+Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -57,7 +68,8 @@ using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
+    await dbContext.Database.MigrateAsync();
+    
     if (!await roleManager.RoleExistsAsync("Admin"))
     {
         var adminRole = new IdentityRole("Admin"); 
@@ -70,6 +82,8 @@ using (var scope = app.Services.CreateScope())
         await roleManager.CreateAsync(userRole);
     }
 
+    dbContext.Database.OpenConnection();
+    dbContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT db_stock.Fees ON");
     var val = await dbContext.Fees.FindAsync(1);
     if (val is null)
     {
@@ -81,20 +95,22 @@ using (var scope = app.Services.CreateScope())
         });
         await dbContext.SaveChangesAsync();
     }
+    dbContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT db_stock.Fees OFF");
+    dbContext.Database.CloseConnection();
 }
     
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .AllowCredentials();
+    });
 }
-app.UseCors(builder =>
-{
-    builder.WithOrigins("http://localhost:5173")
-        .AllowAnyHeader()
-        .WithMethods("GET", "POST", "PUT", "DELETE")
-        .AllowCredentials();
-});
 
 app.UseHttpsRedirection();
 

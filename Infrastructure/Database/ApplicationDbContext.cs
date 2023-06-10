@@ -64,6 +64,7 @@ file sealed class SecurityTableConfiguration : IEntityTypeConfiguration<Security
             .HasForeignKey<Security>(x => x.StockId);
         builder.OwnsOne(x => x.Quantity, a => a.Property(
                 x => x.Value).HasColumnType("decimal(18,2)"));
+        builder.Property(x => x.PurchasedPrice).HasColumnType("money");
     }
 }
 file sealed class StopOrderTableConfiguration : IEntityTypeConfiguration<StopOrder>

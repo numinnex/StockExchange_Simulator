@@ -38,6 +38,7 @@ public static class ConfigureServices
         services.AddSingleton<IMatchingEngine, MatchingEngine.MatchingEngine>();
 
         services.AddHostedService<AccountValueSnapshotWorker>();
+        services.AddSignalR();
         
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ITradeRepository, TradeRepository>();
@@ -69,15 +70,13 @@ public static class ConfigureServices
         {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
                 builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+            options.EnableSensitiveDataLogging();
         });
 
         services.AddHttpClient<IStockClient, StockClient>((sp, client) =>
         {
             var twelveDataOptions = sp.GetService<IOptions<TwelveDataApiOptions>>()!.Value;
             client.BaseAddress = new Uri(twelveDataOptions.Uri);
-
-            //client.DefaultRequestHeaders.Add("X-RapidAPI-Key", twelveDataOptions.Key);
-            //client.DefaultRequestHeaders.Add("X-RapidAPI-Host", twelveDataOptions.Host);
 
         }).AddHttpMessageHandler<TwelveDataHeaderMiddleware>();
 
