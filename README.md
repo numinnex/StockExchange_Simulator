@@ -12,5 +12,6 @@
 - Supports Stop/Market Orders
 - Works only for preseeded APPLE stock (if you want to buy)
 - Realtime price (Trade/Research tab) 
+- ASP.NET Core Authorization/Authentication (use whatever email if you want to register)
 
   
