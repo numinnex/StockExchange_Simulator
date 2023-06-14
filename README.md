@@ -1,8 +1,9 @@
 <div align="center">
   
 ![C#](https://img.shields.io/badge/Language-C%23-blue?style=flat-square)
+[![Website](https://img.shields.io/badge/Website-url-blue?style=flat-square)](https://stockexchange-ui.pages.dev/)
 [![License](https://img.shields.io/github/license/numinnex/Wixapol_Shop_Web?style=flat-square)](https://github.com/numinnex/Wixapol_Shop_Web/blob/master/LICENSE.txt)
-# **Wixapol Web Shop**
+# **Stock Exchange Simulator**
 
  <img src="https://github.com/numinnex/StockExchange_Simulator/assets/112548209/49d1ddf2-971c-4b2d-b214-c441bebdb5ae">
  </div>
