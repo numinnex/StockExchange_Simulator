@@ -14,26 +14,23 @@ public sealed class PortfolioRepository : Repository<Portfolio>, IPortfolioRepos
     }
     public async Task<Portfolio?> GetByUserIdAsync(string userId, CancellationToken token)
     {
-        return await _ctx.Portfolios.Include(x => x.ValueSnapshots).FirstOrDefaultAsync(x => x.UserId == userId, token);
+        return await _ctx.Portfolios.Include(x => x.ValueSnapshots).Include(x => x.Securities)
+            .FirstOrDefaultAsync(x => x.UserId == userId, token);
     }
     public void RemoveSecurity(Security security)
     {
         _ctx.Securities.Remove(security);
     }
-    public async Task<List<Security>> GetSecuritiesByUserIdAsync(string userId, CancellationToken token)
-    {
-        var result = await _ctx.Securities.Where(x => x.UserId == userId).ToListAsync(cancellationToken: token);
-        return result;
-    }
-    public async Task<Security?> GetSecurityByUserIdAndStockId(string stockId, string userId, CancellationToken token)
-    {
-        return await _ctx.Securities.FirstOrDefaultAsync(x => x.UserId == userId && x.StockId == Guid.Parse(stockId ), token);
-    }
-
     public async Task AddSecurityAsync(Security security, CancellationToken token)
     {
         await _ctx.Securities.AddAsync(security, token);
     }
+
+    public void AddRangeSecurities(List<Security> securities)
+    {
+        _ctx.Securities.AddRange(securities);
+    }
+
     public async Task AddValueSnapshots(List<ValueSnapshot> values, CancellationToken token)
     {
         await _ctx.ValueSnapshots.AddRangeAsync(values, token);

@@ -33,18 +33,31 @@ public sealed class MarketOrderQuantityHandler : IRequestHandler<MarketOrderQuan
         var stockSymbol = await _stockUtils.GetStockSymbolByStockId(Guid.Parse(request.StockId));
         var realTimePrice = await _stockClient.GetRealtimePrice(stockSymbol);
 
-        var securities = await _portfolioRepository.GetSecuritiesByUserIdAsync(request.UserId, cancellationToken);
+        var portfolio = await _portfolioRepository.GetByUserIdAsync(request.UserId, cancellationToken);
+        if (portfolio is null)
+        {
+            return Result<MarketTradeResponse>.Failure(new[]
+            {
+                new Error
+                    {
+                    Code = "PortfolioDoesntExist",
+                    Message = "Portfolio doesn't exist"
+                }
+            });
+        }
         if (!request.IsBuy)
         {
-            var security = securities.FirstOrDefault(x => x.StockId == Guid.Parse(request.StockId));
-            if (securities.Count == 0 || security is null || security.Quantity < request.Quantity)
+            var securities = portfolio!.Securities.
+                Where(x => x.StockId == Guid.Parse(request.StockId)).ToList();
+            bool hasQuantity = securities.Any(security => security.Quantity >= request.Quantity);
+            if (!hasQuantity || portfolio.Securities.Count() == 0)
             {
                 return Result<MarketTradeResponse>.Failure(new[]
                 {
-                    new Error()
+                    new Error
                     {
-                        Message = "You don't have enough quantity of this stock",
-                        Code = "Not enough quantity"
+                        Code = "NotEnoughQuantity", 
+                        Message = "You don't have enough quantity of this stock"
                     }
                 });
             }

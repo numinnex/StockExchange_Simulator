@@ -12,7 +12,8 @@ public class FeeProvider : IFeeProvider
     }
     public async Task<Fee?> GetFeeAsync(int feeId)
     {
-        return await _ctx.Fees.FindAsync(feeId);
+        return await _ctx.Fees.AsNoTracking().FirstOrDefaultAsync(f => f.Id == feeId);
+        
     }
 
 }

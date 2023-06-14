@@ -33,9 +33,8 @@ public class MatchingEngine : IMatchingEngine
         _serviceScopeFactory = serviceScopeFactory;
         _meOptions = meOptions;
         _meSettings = meOptions.CurrentValue;
-        //TODO - initialize the stopOrderQueues and books from database
         _stopOrdersQueue = new();
-        _books = new();
+        _books = RestoreBookState();
         _stepSize = _meSettings.StepSize;
     }
     //For testing purposes only
@@ -52,13 +51,54 @@ public class MatchingEngine : IMatchingEngine
     
     private ConcurrentDictionary<string, IBook> RestoreBookState()
     {
-        throw new NotImplementedException();
-    }
-    private ConcurrentDictionary<string, Queue<IReadOnlyList<PriceLevel>>> RestoreQueueState()
-    {
-        throw new NotImplementedException();
-    }
+        var scope = _serviceScopeFactory.CreateScope();
+        var orderRepository = scope.ServiceProvider.GetService<IOrderRepository>();
 
+        var marketOrders = orderRepository.GetAllMarketOrdersAsync(default,x => x.Status == TradeStatus.InQueue).GetAwaiter().GetResult();
+        var stopOrders =
+            orderRepository.GetAllStopOrdersAsync(default, x => x.IsTriggered == false && x.Status == TradeStatus.InQueue).GetAwaiter().GetResult();
+        
+        var groupedMarketOrders = marketOrders.GroupBy(x => x.Symbol);
+        var groupedStopOrders = stopOrders.GroupBy(x => x.Symbol);
+        var result = new ConcurrentDictionary<string, IBook>();
+        
+        foreach(var group in groupedMarketOrders)
+        {
+            var symbol = group.Key;
+            var book = new Book();
+            foreach(var order in group)
+            {
+                book.AddOrder(order);
+            }
+
+            result.TryAdd(symbol, book);
+        }
+        foreach(var group in groupedStopOrders)
+        {
+            var symbol = group.Key;
+            if (result.ContainsKey(symbol))
+            {
+                var book = result[symbol];
+                foreach (var order in group)
+                {
+                    book.AddOrder(order);
+                }
+
+            }
+            else
+            {
+                var book = new Book();
+                foreach (var order in group)
+                {
+                    book.AddOrder(order);
+                }
+                
+                result.TryAdd(symbol, book);
+            }
+        }
+
+        return result;
+    }
     //In order to get a real discriminated union I should have used OneOf package
     //but it's not worth getting that dependency for one return type
     public async Task<Ok<OrderProcessingResult?, StopOrderProcessingResult?>> AddOrder(IOrder order, CancellationToken token)
@@ -136,12 +176,12 @@ public class MatchingEngine : IMatchingEngine
             var currentMarketPrice = book.CurrentMarketPrice!;
             if (currentMarketPrice > previousMarketPrice)
             {
-                var stopBidsPriceLevel = book.GetStopBids(currentMarketPrice);
+                var stopBidsPriceLevel = book.RemoveStopBidsUntillPrice(currentMarketPrice);
                 queue.Enqueue(stopBidsPriceLevel);
             }
             else if (currentMarketPrice < previousMarketPrice)
             {
-                var stopAsksPriceLevel = book.GetStopAsks(currentMarketPrice);
+                var stopAsksPriceLevel = book.RemoveStopAsksUntillPrice(currentMarketPrice);
                 queue.Enqueue(stopAsksPriceLevel);
             }
         }
@@ -326,6 +366,7 @@ public class MatchingEngine : IMatchingEngine
 
                     incommingOrder.OpenQuantity -= maxQuantity;
                     incommingOrder.UpdateTradeStatus();
+                    await tradeListener!.OnAcceptAsync(incommingOrder, token);
 
                     var cost = Math.Round(maxQuantity * matchPrice, 4);
                     incommingOrder.Cost += cost;
@@ -420,6 +461,7 @@ public class MatchingEngine : IMatchingEngine
         }
         return new TradeFootprint
         {
+            StockId = incommingMarketOrder.StockId,
             Quantity = maxQuantity,
             MatchPrice = matchPrice,
             ProcessedOrderId = incommingMarketOrder.Id,

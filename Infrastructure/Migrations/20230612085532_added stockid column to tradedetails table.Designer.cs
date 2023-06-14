@@ -4,6 +4,7 @@ using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230612085532_added stockid column to tradedetails table")]
+    partial class addedstockidcolumntotradedetailstable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -141,7 +144,7 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("PurchasedPrice")
                         .HasColumnType("money");
 
-                    b.Property<Guid>("StockId")
+                    b.Property<Guid?>("StockId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("Timestamp")
@@ -151,13 +154,11 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("OrderId");
 
-                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("OrderId"), false);
-
                     b.HasIndex("PortfolioId");
 
-                    b.HasIndex("StockId");
-
-                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("StockId"), false);
+                    b.HasIndex("StockId")
+                        .IsUnique()
+                        .HasFilter("[StockId] IS NOT NULL");
 
                     b.ToTable("Securities", "db_stock");
                 });
@@ -771,9 +772,7 @@ namespace Infrastructure.Migrations
 
                     b.HasOne("Domain.Entities.Stock", "Stock")
                         .WithOne("Security")
-                        .HasForeignKey("Domain.Entities.Security", "StockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Domain.Entities.Security", "StockId");
 
                     b.OwnsOne("Quantity", "Quantity", b1 =>
                         {

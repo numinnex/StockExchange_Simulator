@@ -49,19 +49,28 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         //optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor);
         base.OnConfiguring(optionsBuilder);
     }
+
 }
 
 file sealed class SecurityTableConfiguration : IEntityTypeConfiguration<Security>
 {
     public void Configure(EntityTypeBuilder<Security> builder)
     {
-        builder.HasOne(x => x.User)
-            .WithMany(x => x.SecurityCollection)
-            .HasForeignKey(x => x.UserId);
-                
+        
+        builder.HasOne(x => x.Portfolio)
+            .WithMany(x => x.Securities)
+            .HasForeignKey(x => x.PortfolioId);
         builder.HasOne(x => x.Stock)
             .WithOne(x => x.Security)
             .HasForeignKey<Security>(x => x.StockId);
+
+         builder.HasIndex(x => x.StockId)
+             .IsUnique(false)
+             .IsClustered(false);
+         builder.HasIndex(x => x.OrderId)
+             .IsUnique(false)
+             .IsClustered(false);
+            
         builder.OwnsOne(x => x.Quantity, a => a.Property(
                 x => x.Value).HasColumnType("decimal(18,2)"));
         builder.Property(x => x.PurchasedPrice).HasColumnType("money");
@@ -176,6 +185,7 @@ file sealed class PortfolioTableConfiguration : IEntityTypeConfiguration<Portfol
 {
     public void Configure(EntityTypeBuilder<Portfolio> builder)
     {
+        
         builder.Property(x => x.TotalValue).HasColumnType("money");
         builder.HasOne(x => x.User).WithOne(x => x.Portfolio);
     }
@@ -210,7 +220,7 @@ file sealed class MarketOrdersTableConfiguration : IEntityTypeConfiguration<Mark
 
         builder.OwnsOne(x => x.Cost
         , a => a.Property(x => x.Value).HasColumnType("money"));
-        
+
         builder.HasOne(x => x.Stock).WithMany(x => x.MarketOrders)
             .HasForeignKey(x => x.StockId);
 

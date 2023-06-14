@@ -60,9 +60,8 @@ public sealed class StockClient : IStockClient
             }
 
             price = (await stockPriceResponse.Content.ReadFromJsonAsync<PriceReadModel>())!.price;
-
             var stocksResult = new List<Stock>();
-
+            
             foreach (var stockReadModel in stocksResponse.Data.ToArray())
             {
                 var newStock = MapStockResponse(stockReadModel, price , openHiLow!);

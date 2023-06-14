@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Application.Common.Interfaces.Repository;
 using Application.Common.Models;
 using Contracts.V1.Responses;
 using Domain.Entities;
@@ -14,18 +15,56 @@ public sealed class StopOrderQuantityCommandHandler: IRequestHandler<StopOrderQu
     private readonly IMatchingEngine _matchingEngine;
     private readonly IStockUtils _stockUtils;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly IPortfolioRepository _portfolioRepository;
 
     public StopOrderQuantityCommandHandler(IMatchingEngine matchingEngine, IStockUtils stockUtils,
-        IDateTimeProvider dateTimeProvider )
+        IDateTimeProvider dateTimeProvider , IPortfolioRepository portfolioRepository)
     {
         _matchingEngine = matchingEngine;
         _stockUtils = stockUtils;
         _dateTimeProvider = dateTimeProvider;
+        _portfolioRepository = portfolioRepository;
     }
     public async Task<Result<StopOrderResponse>> Handle(StopOrderQuantityCommand request, CancellationToken cancellationToken)
     {
         var stockSymbol = await _stockUtils.GetStockSymbolByStockId(Guid.Parse(request.StockId));
         
+        var portfolio = await _portfolioRepository.GetByUserIdAsync(request.UserId, cancellationToken);
+        if (portfolio is null)
+        {
+            return Result<StopOrderResponse>.Failure(new[]
+            {
+                new Error
+                {
+                    Code = "PortfolioDoesntExist",
+                    Message = "Portfolio doesn't exist"
+                }
+            });
+        }
+        if (!request.IsBuy)
+        {
+            var securities = portfolio.Securities
+                .Where(x => x.StockId == Guid.Parse(request.StockId)).ToList();
+            bool hasQuantity = false;
+            foreach (var security in securities)
+            {
+                if (security.Quantity >= request.Quantity)
+                {
+                    hasQuantity = true;
+                }
+            }
+            if (!hasQuantity || portfolio.Securities.Count() == 0)
+            {
+                return Result<StopOrderResponse>.Failure(new[]
+                {
+                    new Error
+                    {
+                        Code = "NotEnoughQuantity", 
+                        Message = "You don't have enough quantity of this stock"
+                    }
+                });
+            }
+        }
         var order = new StopOrder()
         {
             Id = new Guid(),

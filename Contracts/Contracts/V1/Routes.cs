@@ -32,5 +32,6 @@ public static class Routes
         public const string PlaceStopOrderWithQuantity = Base + "/order/stop/quantity";
         public const string PlaceMarketOrderWithAmount = Base + "/order/market/amount";
         public const string GetActiveTrades = Base + "/order/active/";
+        public const string GetUserTrades = Base + "/order/trades/";
     }
 }

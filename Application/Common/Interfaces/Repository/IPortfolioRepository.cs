@@ -9,9 +9,8 @@ public interface IPortfolioRepository: IRepository<Portfolio>
     Task<List<Portfolio>> GetAllAsync(CancellationToken token);
     Task<Portfolio?> GetByUserIdAsync(string userId, CancellationToken token);
     void RemoveSecurity(Security security);
-    Task<List<Security>> GetSecuritiesByUserIdAsync(string userId, CancellationToken token);
-    Task<Security?> GetSecurityByUserIdAndStockId(string stockId,string userId, CancellationToken token);
     Task AddSecurityAsync(Security security, CancellationToken token);
+    void AddRangeSecurities(List<Security> securities);
     Task AddValueSnapshots(List<ValueSnapshot> values, CancellationToken token);
     void UpdateSecurity(Security security );
     Task SaveChangesAsync(CancellationToken token);

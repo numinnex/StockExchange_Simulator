@@ -19,8 +19,8 @@ public interface IBook
     public int StopAsksLevelCount { get; }
     public int BestStopBidsCount { get; }
     public int BestStopAsksCount { get; }
-    public IReadOnlyList<PriceLevel> GetStopBids(Price price);
-    public IReadOnlyList<PriceLevel> GetStopAsks(Price price);
+    public IReadOnlyList<PriceLevel> RemoveStopBidsUntillPrice(Price price);
+    public IReadOnlyList<PriceLevel> RemoveStopAsksUntillPrice(Price price);
     public bool RemoveOrder(IOrder order, Price price);
     public bool AddOrder(IOrder order );
     public bool FillOrder(IOrder order, Quantity quantity, Price price);

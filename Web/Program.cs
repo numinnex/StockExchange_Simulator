@@ -5,6 +5,8 @@ using Infrastructure.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Web.DbSeeder;
+using Web.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,9 @@ builder.Services.AddControllers()
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddTransient<DbSeederService>();
+
+
 /*
 Console.WriteLine("---------HELLO-------------");
 Console.WriteLine("---------HELLO-------------");
@@ -35,7 +40,6 @@ Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection")
 Console.WriteLine(builder.Configuration.GetSection("TwelveDataApiOptions")["Key"]);
 Console.WriteLine(builder.Configuration.GetSection("TwelveDataApiOptions")["Host"]);
 */
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(x =>
 {
@@ -72,6 +76,7 @@ using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var seeder = scope.ServiceProvider.GetRequiredService<DbSeederService>();
     await dbContext.Database.MigrateAsync();
     
     if (!await roleManager.RoleExistsAsync("Admin"))
@@ -101,21 +106,21 @@ using (var scope = app.Services.CreateScope())
     }
     dbContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT db_stock.Fees OFF");
     dbContext.Database.CloseConnection();
-}
-    
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseCors(policy =>
-    {
-        policy.WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
-            .WithMethods("GET", "POST", "PUT", "DELETE")
-            .AllowCredentials();
-    });
+
+    await seeder.SeedDbAsync();
 }
 
+//app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseCors(policy =>
+{
+    policy.WithOrigins("http://localhost:5173")
+        .AllowAnyHeader()
+        .WithMethods("GET", "POST", "PUT", "DELETE")
+        .AllowCredentials();
+});
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

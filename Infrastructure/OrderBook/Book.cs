@@ -70,7 +70,7 @@ public class Book : IBook
         return true;
     }
     
-    public IReadOnlyList<PriceLevel> GetStopBids(Price price)
+    public IReadOnlyList<PriceLevel> RemoveStopBidsUntillPrice(Price price)
     {
         lock (_sync)
         {
@@ -78,7 +78,7 @@ public class Book : IBook
         }
     }
 
-    public IReadOnlyList<PriceLevel> GetStopAsks(Price price)
+    public IReadOnlyList<PriceLevel> RemoveStopAsksUntillPrice(Price price)
     {
         lock (_sync)
         {

@@ -26,14 +26,5 @@ public class PortfolioController : ControllerBase
         }
         return BadRequest(response.Errors);
     }   
-    [HttpGet(Routes.Portfolio.GetUserSecurities)]
-    public async Task<IActionResult> GetSecurities([FromRoute] string userId)
-    {
-        var response =await _mediator.Send(new GetUserSecuritiesQuery(userId));
-        if (response.IsSuccess)
-        {
-            return Ok(response.Value);
-        }
-        return BadRequest(response.Errors);
-    }   
+    
 }

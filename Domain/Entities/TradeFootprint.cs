@@ -6,6 +6,7 @@ namespace Domain.Entities;
 public sealed class TradeFootprint  
 {
     public int Id { get; init; }
+    public required Guid StockId { get; init; }
     public required bool ProcessedOrderIsBuy { get; init; }
     public required Guid ProcessedOrderId { get; init; }     
     public required Guid RestingOrderId { get; init; }     

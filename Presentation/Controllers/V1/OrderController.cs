@@ -74,4 +74,16 @@ public class OrderController : ControllerBase
 
         return BadRequest(response.Errors);
     }
+    [HttpGet(Routes.Order.GetUserTrades)]
+    [Authorize]
+    public async Task<IActionResult> GetUserTrades([FromQuery]string userId)
+    {
+        var response = await _mediator.Send(new GetUserTradesQuery(userId));
+        if (response.IsSuccess)
+        {
+            return Ok(response.Value);
+        }
+        return BadRequest(response.Errors);
+    }
+    
 }

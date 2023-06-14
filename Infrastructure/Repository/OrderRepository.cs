@@ -43,6 +43,11 @@ public sealed class OrderRepository : IOrderRepository
         }
     }
 
+    public void AddSeedMarketOrdersAsync(List<MarketOrder> orders)
+    {
+        _marketOrder.AddRange(orders);
+    }
+
     public async Task<List<MarketOrder>> GetAllMarketOrdersAsync(CancellationToken token, Expression<Func<MarketOrder, bool>>? filter = null, string? includeProperties = null)
     {
         IQueryable<MarketOrder> query = _marketOrder;
@@ -58,6 +63,21 @@ public sealed class OrderRepository : IOrderRepository
         return await query.ToListAsync(token);
     }
 
+    public async Task<List<StopOrder>> GetAllStopOrdersAsync(CancellationToken token, Expression<Func<StopOrder, bool>>? filter = null, string? includeProperties = null)
+    {
+        IQueryable<StopOrder> query = _stopOrder;
+        if (includeProperties is not null)
+        {
+            foreach (var prop in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(prop);
+            }
+        }
+        if (filter is not null)
+            query = query.Where(filter);
+        
+        return await query.ToListAsync(token);
+    }
     public async Task<List<MarketOrder>> GetPaginatedActiveMarketOrdersAsync(int pageNumber, int pageSize, CancellationToken token)
     {
         var query = _ctx.MarketOrders.Where(x => x.Status == TradeStatus.InQueue).AsQueryable();

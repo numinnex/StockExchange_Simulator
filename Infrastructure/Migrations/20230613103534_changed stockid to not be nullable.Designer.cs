@@ -4,6 +4,7 @@ using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230613103534_changed stockid to not be nullable")]
+    partial class changedstockidtonotbenullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,13 +154,10 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("OrderId");
 
-                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("OrderId"), false);
-
                     b.HasIndex("PortfolioId");
 
-                    b.HasIndex("StockId");
-
-                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("StockId"), false);
+                    b.HasIndex("StockId")
+                        .IsUnique();
 
                     b.ToTable("Securities", "db_stock");
                 });

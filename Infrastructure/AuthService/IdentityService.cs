@@ -205,6 +205,13 @@ public sealed class IdentityService :  IIdentityService
         var result = await _userManager.FindByIdAsync(userId);
         return result is not null;
     }
+
+    public async Task<bool> FindByEmailAsync(string email, CancellationToken token)
+    {
+        var result = await _userManager.FindByEmailAsync(email);
+        return result is not null;
+    }
+
     private ClaimsPrincipal GetPrincipalFromToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
