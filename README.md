@@ -10,6 +10,8 @@
  <img src="https://github.com/numinnex/StockExchange_Simulator/assets/112548209/d4e8b200-cb8e-4338-8a95-fcc8879739b3">
  </div>
  
+# Intresting Parts
+- If you're looking for the juice, most of it is placed in the `MatchingEngine.cs` file inside of `Infrastructure` layer 
 # Functionality
 - Supports Stop/Market Orders
 - Works only for preseeded APPLE stock (if you want to buy)
