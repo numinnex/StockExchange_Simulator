@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/numinnex/Wixapol_Shop_Web?style=flat-square)](https://github.com/numinnex/Wixapol_Shop_Web/blob/master/LICENSE.txt)
 # **Stock Exchange Simulator**
 
- <img src="https://github.com/numinnex/StockExchange_Simulator/assets/112548209/49d1ddf2-971c-4b2d-b214-c441bebdb5ae">
+ <img src="https://github.com/numinnex/StockExchange_Simulator/assets/112548209/d4e8b200-cb8e-4338-8a95-fcc8879739b3">
  </div>
  
 # Functionality
