@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Web.DbSeeder;
-using Web.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,22 +23,6 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddTransient<DbSeederService>();
 
-
-/*
-Console.WriteLine("---------HELLO-------------");
-Console.WriteLine("---------HELLO-------------");
-Console.WriteLine("---------HELLO-------------");
-Console.WriteLine("---------HELLO-------------");
-Console.WriteLine("---------HELLO-------------");
-Console.WriteLine("---------HELLO-------------");
-Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
-Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
-Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
-Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
-
-Console.WriteLine(builder.Configuration.GetSection("TwelveDataApiOptions")["Key"]);
-Console.WriteLine(builder.Configuration.GetSection("TwelveDataApiOptions")["Host"]);
-*/
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(x =>
 {

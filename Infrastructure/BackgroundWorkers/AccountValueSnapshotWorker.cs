@@ -13,7 +13,7 @@ public sealed class AccountValueSnapshotWorker : BackgroundService
     public AccountValueSnapshotWorker(IServiceProvider services)
     {
         _services = services;
-        _snapshotInterval = TimeSpan.FromHours(24);
+        _snapshotInterval = TimeSpan.FromDays(1);
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -22,11 +22,11 @@ public sealed class AccountValueSnapshotWorker : BackgroundService
         {
             try
             {
-                using (var scope = _services.CreateScope())
-                {
-                    var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
-                    await TakeSnapshotAsync(portfolioRepository, stoppingToken);
-                }
+                 using (var scope = _services.CreateScope())
+                 {
+                     var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+                     await TakeSnapshotAsync(portfolioRepository, stoppingToken);
+                 }
             }
             catch (Exception e)
             {
