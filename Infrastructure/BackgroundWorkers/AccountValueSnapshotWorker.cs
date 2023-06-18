@@ -2,16 +2,19 @@ using Application.Common.Interfaces.Repository;
 using Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.BackgroundWorkers;
 
 public sealed class AccountValueSnapshotWorker : BackgroundService
 {
+    private readonly ILogger<AccountValueSnapshotWorker> _logger;
     private readonly IServiceProvider _services;
     private readonly TimeSpan _snapshotInterval;
 
-    public AccountValueSnapshotWorker(IServiceProvider services)
+    public AccountValueSnapshotWorker(ILogger<AccountValueSnapshotWorker> logger ,IServiceProvider services)
     {
+        _logger = logger;
         _services = services;
         _snapshotInterval = TimeSpan.FromDays(1);
     }
@@ -25,8 +28,11 @@ public sealed class AccountValueSnapshotWorker : BackgroundService
                  using (var scope = _services.CreateScope())
                  {
                      var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+                     _logger.LogInformation("UPDATING ACCOUNT VALUE SNAPSHOT");
                      await TakeSnapshotAsync(portfolioRepository, stoppingToken);
+                     _logger.LogInformation("FINISHED UPDATING ACCOUNT VALUE SNAPSHOT");
                  }
+                 
             }
             catch (Exception e)
             {
