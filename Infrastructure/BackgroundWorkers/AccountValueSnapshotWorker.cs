@@ -32,7 +32,6 @@ public sealed class AccountValueSnapshotWorker : BackgroundService
                      await TakeSnapshotAsync(portfolioRepository, stoppingToken);
                      _logger.LogInformation("FINISHED UPDATING ACCOUNT VALUE SNAPSHOT");
                  }
-                 
             }
             catch (Exception e)
             {

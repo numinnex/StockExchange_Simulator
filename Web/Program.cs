@@ -105,11 +105,15 @@ app.UseCors(policy =>
         .AllowCredentials();
 });
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<PriceHub>("/price");
+app.MapHub<PriceHub>("/price").RequireCors(policy =>
+{
+    policy.WithOrigins("http://localhost:5173")
+        .WithMethods("GET", "POST", "PUT", "DELETE")
+        .AllowCredentials();
+});
 app.MapControllers();
 
 
